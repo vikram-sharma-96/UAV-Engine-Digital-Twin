@@ -1,0 +1,123 @@
+---
+// Header.astro - Avionics Command Header
+---
+
+<header class="border-b border-slate-800/80 bg-[#0a0e1a]/95 backdrop-blur-md sticky top-0 z-40 px-4 lg:px-6 py-2.5 transition-all">
+  <div class="flex items-center justify-between gap-4">
+    
+    <!-- Left: Logo & Project Title -->
+    <div class="flex items-center gap-3.5">
+      <!-- Aerospace Turbine/Propeller Icon -->
+      <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] group">
+        <svg class="w-5 h-5 text-cyan-400 group-hover:rotate-90 transition-transform duration-700 ease-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 2v4"></path>
+          <path d="M12 18v4"></path>
+          <path d="M4.93 4.93l2.83 2.83"></path>
+          <path d="M16.24 16.24l2.83 2.83"></path>
+          <path d="M2 12h4"></path>
+          <path d="M18 12h4"></path>
+          <path d="M4.93 19.07l2.83-2.83"></path>
+          <path d="M16.24 7.76l2.83-2.83"></path>
+        </svg>
+        <span class="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+        </span>
+      </div>
+
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base lg:text-lg font-bold tracking-wider text-slate-100 uppercase font-mono-tech flex items-center gap-1.5">
+            UAV DIGITAL TWIN
+            <span class="text-[10px] font-normal px-1.5 py-0.5 rounded bg-cyan-950/70 text-cyan-400 border border-cyan-500/30 tracking-normal">
+              PT-900 X1
+            </span>
+          </h1>
+        </div>
+        <p class="text-[11px] font-medium tracking-wide text-slate-400 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+          ENGINE HEALTH MONITORING SYSTEM
+          <span class="hidden sm:inline text-slate-600">|</span>
+          <span class="hidden sm:inline text-slate-500 font-mono-tech text-[10px]">AERO PISTON 4-CYL BOXER</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Center: Live Simulation Badge & Subtitle highlight (hidden on small mobile) -->
+    <div class="hidden md:flex items-center gap-3">
+      <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-xs font-mono-tech shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="font-semibold tracking-wider">LIVE SIMULATION</span>
+      </div>
+
+      <div class="flex items-center gap-1.5 text-xs text-slate-400 font-mono-tech bg-slate-900/80 px-2.5 py-1 rounded border border-slate-800">
+        <span class="text-slate-500">CAN-BUS:</span>
+        <span class="text-cyan-400 font-semibold">1 Mbps ACTIVE</span>
+      </div>
+    </div>
+
+    <!-- Right: Connection Indicator, Clock & Settings -->
+    <div class="flex items-center gap-3">
+      <!-- Connection Telemetry Link Indicator -->
+      <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-slate-900/90 border border-slate-800 text-xs">
+        <div class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </div>
+        <span class="text-slate-300 font-mono-tech text-[11px] tracking-tight">TELEM: <strong class="text-emerald-400 font-normal">LINK OK</strong></span>
+      </div>
+
+      <!-- Current Time Clock (Military / Zulu Time) -->
+      <div class="hidden sm:flex flex-col items-end px-2.5 py-0.5 rounded bg-slate-950/60 border border-slate-800/80 font-mono-tech text-right">
+        <div class="flex items-center gap-1 text-xs text-cyan-300 font-semibold" id="telemetry-clock">
+          --:--:-- UTC
+        </div>
+        <div class="text-[9px] text-slate-400 uppercase tracking-wider" id="telemetry-date">
+          SYS-DATE
+        </div>
+      </div>
+
+      <!-- Settings Button -->
+      <button 
+        id="settings-btn"
+        aria-label="Engine System Settings" 
+        class="p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 rounded-lg border border-slate-800 transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-500"
+        title="Telemetry & Bus Settings"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  function updateTelemetryClock() {
+    const clockEl = document.getElementById('telemetry-clock');
+    const dateEl = document.getElementById('telemetry-date');
+    if (!clockEl || !dateEl) return;
+    
+    const now = new Date();
+    const utcHours = String(now.getUTCHours()).padStart(2, '0');
+    const utcMinutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const utcSeconds = String(now.getUTCSeconds()).padStart(2, '0');
+    clockEl.textContent = `${utcHours}:${utcMinutes}:${utcSeconds} UTC`;
+
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    dateEl.textContent = `${year}-${month}-${day} | ZULU`;
+  }
+  
+  updateTelemetryClock();
+  setInterval(updateTelemetryClock, 1000);
+
+  // Settings modal trigger toggle
+  const settingsBtn = document.getElementById('settings-btn');
+  settingsBtn?.addEventListener('click', () => {
+    window.dispatchEvent(new CustomEvent('toggle-settings-dialog'));
+  });
+</script>

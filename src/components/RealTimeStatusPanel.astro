@@ -1,0 +1,86 @@
+---
+import { initialEngineData } from '../data/engineTelemetry';
+
+const { system } = initialEngineData;
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-slate-900 border border-slate-700 text-cyan-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line>
+          <line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          REAL-TIME TELEMETRY STATUS
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          BUS HARDWARE INTERFACE & LINK HEALTH
+        </p>
+      </div>
+    </div>
+
+    <span class="text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+      PORT: CAN0
+    </span>
+  </div>
+
+  <!-- Status Rows Grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 my-3 font-mono-tech text-xs">
+    
+    <!-- 1. DATA STREAM -->
+    <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <span class="text-[10px] text-slate-400 uppercase">DATA STREAM</span>
+      <div class="flex items-center gap-1.5 font-bold text-emerald-400 mt-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="rt-stream-status">{system.streamStatus}</span>
+      </div>
+    </div>
+
+    <!-- 2. UPDATE RATE -->
+    <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <span class="text-[10px] text-slate-400 uppercase">UPDATE RATE</span>
+      <div class="font-bold text-cyan-400 mt-1">
+        {system.updateRate}
+      </div>
+    </div>
+
+    <!-- 3. DATA SOURCE -->
+    <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <span class="text-[10px] text-slate-400 uppercase">DATA SOURCE</span>
+      <div class="font-bold text-slate-200 truncate mt-1" title={system.dataSource}>
+        Engine Simulator
+      </div>
+    </div>
+
+    <!-- 4. MODEL STATUS -->
+    <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <span class="text-[10px] text-slate-400 uppercase">MODEL STATUS</span>
+      <div class="font-bold text-slate-400 mt-1 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+        {system.mlModelStatus}
+      </div>
+    </div>
+
+    <!-- 5. AI AGENT -->
+    <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between col-span-2 sm:col-span-1">
+      <span class="text-[10px] text-slate-400 uppercase">AI AGENT</span>
+      <div class="font-bold text-amber-400 mt-1 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+        {system.aiAgentStatus}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+    <span>FRAME LOSS: 0.00%</span>
+    <span class="text-cyan-400">LATENCY: 12 ms</span>
+  </div>
+</div>

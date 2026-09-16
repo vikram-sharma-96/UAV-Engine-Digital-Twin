@@ -1,0 +1,271 @@
+---
+// FaultSimulationPanel.astro - Interactive UI Testbed
+const simulationOptions = [
+  { id: "normal", label: "Normal Operation", color: "emerald", icon: "check" },
+  { id: "overheating", label: "Simulate Overheating", color: "amber", icon: "flame" },
+  { id: "bearing", label: "Simulate Bearing Fault", color: "rose", icon: "zap" },
+  { id: "oilPressure", label: "Simulate Low Oil Pressure", color: "rose", icon: "alert" },
+  { id: "degradation", label: "Simulate Performance Degradation", color: "orange", icon: "trend" }
+];
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/30 p-4 shadow-sm" id="fault-simulation">
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-cyan-950/70 border border-cyan-500/40 text-cyan-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10 8 16 12 10 16 10 8"></polygon>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200 flex items-center gap-2">
+          FAULT SIMULATION CONTROL CONSOLE
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+            FRONTEND TESTBED
+          </span>
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          TRIGGER ANOMALY STATES TO TEST DASHBOARD VISUALIZATIONS
+        </p>
+      </div>
+    </div>
+
+    <div class="text-[10px] font-mono-tech text-slate-400 flex items-center gap-1.5 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+      <span>MODE:</span>
+      <span id="active-sim-badge" class="text-emerald-400 font-bold">NORMAL OPERATION</span>
+    </div>
+  </div>
+
+  <!-- Buttons Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 my-3">
+    {simulationOptions.map((opt, idx) => (
+      <button
+        type="button"
+        class:list={[
+          "sim-btn p-2.5 rounded-lg border text-xs font-mono-tech font-medium flex flex-col justify-between gap-2 transition-all group text-left cursor-pointer",
+          idx === 0 
+            ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-400/40" 
+            : "bg-[#0d1424] border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
+        ]}
+        data-sim-id={opt.id}
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-slate-400 group-hover:text-slate-300">SCENARIO {idx + 1}</span>
+          {opt.icon === "check" && <span class="w-2 h-2 rounded-full bg-emerald-400"></span>}
+          {opt.icon === "flame" && <span class="w-2 h-2 rounded-full bg-amber-400"></span>}
+          {opt.icon === "zap" && <span class="w-2 h-2 rounded-full bg-rose-400"></span>}
+          {opt.icon === "alert" && <span class="w-2 h-2 rounded-full bg-rose-500"></span>}
+          {opt.icon === "trend" && <span class="w-2 h-2 rounded-full bg-orange-400"></span>}
+        </div>
+        <div class="font-semibold text-xs leading-tight">
+          {opt.label}
+        </div>
+        <div class="text-[9px] text-slate-400 font-mono-tech flex items-center justify-between pt-1 border-t border-slate-800/60">
+          <span>TRIGGER</span>
+          <span class="text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity">› APPLY</span>
+        </div>
+      </button>
+    ))}
+  </div>
+
+  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+    <span>TESTBED INJECTOR: CLIENT-SIDE STATE DISPATCH</span>
+    <span class="text-slate-400">NO ML / BACKEND CALLS REQUIRED</span>
+  </div>
+</div>
+
+<script>
+  import { simulationPresets } from '../data/engineTelemetry';
+
+  const simBtns = document.querySelectorAll('.sim-btn');
+  const activeBadge = document.getElementById('active-sim-badge');
+
+  simBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const simId = btn.getAttribute('data-sim-id') as keyof typeof simulationPresets;
+      const preset = simulationPresets[simId];
+      if (!preset) return;
+
+      // Update button styling states
+      simBtns.forEach(b => {
+        b.classList.remove(
+          'bg-emerald-950/40', 'border-emerald-500/50', 'text-emerald-200', 'shadow-[0_0_12px_rgba(16,185,129,0.15)]', 'ring-1', 'ring-emerald-400/40',
+          'bg-amber-950/40', 'border-amber-500/50', 'text-amber-200', 'shadow-[0_0_12px_rgba(245,158,11,0.15)]', 'ring-amber-400/40',
+          'bg-rose-950/40', 'border-rose-500/50', 'text-rose-200', 'shadow-[0_0_12px_rgba(244,63,94,0.15)]', 'ring-rose-400/40'
+        );
+        b.classList.add('bg-[#0d1424]', 'border-slate-800', 'text-slate-300');
+      });
+
+      if (simId === 'normal') {
+        btn.classList.add('bg-emerald-950/40', 'border-emerald-500/50', 'text-emerald-200', 'ring-1', 'ring-emerald-400/40');
+      } else if (simId === 'overheating' || simId === 'degradation') {
+        btn.classList.add('bg-amber-950/40', 'border-amber-500/50', 'text-amber-200', 'ring-1', 'ring-amber-400/40');
+      } else {
+        btn.classList.add('bg-rose-950/40', 'border-rose-500/50', 'text-rose-200', 'ring-1', 'ring-rose-400/40');
+      }
+      btn.classList.remove('bg-[#0d1424]', 'border-slate-800', 'text-slate-300');
+
+      if (activeBadge) {
+        activeBadge.textContent = preset.name.toUpperCase();
+        activeBadge.className = preset.healthStatus === 'HEALTHY' 
+          ? 'text-emerald-400 font-bold' 
+          : preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY'
+          ? 'text-amber-400 font-bold'
+          : 'text-rose-400 font-bold';
+      }
+
+      // 1. Update Metric Cards
+      const healthVal = document.getElementById('metric-health-val');
+      const healthStatus = document.getElementById('metric-health-status');
+      const healthBar = document.getElementById('metric-health-bar');
+      const rpmVal = document.getElementById('metric-rpm-val');
+      const tempVal = document.getElementById('metric-temp-val');
+      const oilVal = document.getElementById('metric-oil-val');
+      const vibVal = document.getElementById('metric-vib-val');
+      const fuelVal = document.getElementById('metric-fuel-val');
+
+      if (healthVal) healthVal.textContent = String(preset.healthScore);
+      if (healthStatus) {
+        healthStatus.textContent = preset.healthStatus;
+        healthStatus.className = `px-1.5 py-0.2 rounded text-[10px] font-bold ${
+          preset.healthStatus === 'HEALTHY' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
+          preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY' ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
+          'bg-rose-950/60 text-rose-400 border border-rose-500/30'
+        }`;
+      }
+      if (healthBar) {
+        healthBar.style.width = `${preset.healthScore}%`;
+      }
+      if (rpmVal) rpmVal.textContent = preset.rpm.toLocaleString();
+      if (tempVal) tempVal.textContent = String(preset.temperature);
+      if (oilVal) oilVal.textContent = String(preset.oilPressure);
+      if (vibVal) vibVal.textContent = String(preset.vibration);
+      if (fuelVal) fuelVal.textContent = String(preset.fuelConsumption);
+
+      // 2. Update Digital Twin Central Viewer
+      const twinStatusText = document.getElementById('twin-status-text');
+      const twinStatusPill = document.getElementById('twin-status-pill');
+      const twinRpm = document.getElementById('twin-rpm-display');
+      const twinTemp = document.getElementById('twin-temp-display');
+      const twinOil = document.getElementById('twin-oil-display');
+      const twinVib = document.getElementById('twin-vib-display');
+
+      if (twinStatusText) twinStatusText.textContent = preset.statusText;
+      if (twinStatusPill) {
+        if (preset.healthStatus === 'HEALTHY') {
+          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-mono-tech font-semibold tracking-wider';
+        } else if (preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY') {
+          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-amber-950/60 border border-amber-500/50 text-amber-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse';
+        } else {
+          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-rose-950/70 border border-rose-500/60 text-rose-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse';
+        }
+      }
+      if (twinRpm) twinRpm.textContent = preset.rpm.toLocaleString();
+      if (twinTemp) twinTemp.textContent = String(preset.temperature);
+      if (twinOil) twinOil.textContent = String(preset.oilPressure);
+      if (twinVib) twinVib.textContent = String(preset.vibration);
+
+      // 3. Update Health Breakdown Panel & Radial Gauge
+      const radialRing = document.getElementById('radial-health-ring');
+      const panelHealthScore = document.getElementById('panel-health-score');
+      const panelHealthLabel = document.getElementById('panel-health-label');
+      if (radialRing) {
+        radialRing.style.strokeDashoffset = String(251.2 * (1 - preset.healthScore / 100));
+      }
+      if (panelHealthScore) panelHealthScore.textContent = String(preset.healthScore);
+      if (panelHealthLabel) {
+        panelHealthLabel.textContent = `INTEGRITY: ${preset.healthScore}%`;
+        panelHealthLabel.className = `mt-2 text-xs font-bold font-mono-tech ${
+          preset.healthScore >= 90 ? 'text-emerald-400' : preset.healthScore >= 70 ? 'text-amber-400' : 'text-rose-400'
+        }`;
+      }
+
+      // Update component progress bars
+      const compScores = preset.components;
+      const cylScoreEl = document.getElementById('comp-score-cylinder');
+      const cylBarEl = document.getElementById('comp-bar-cylinder');
+      if (cylScoreEl) cylScoreEl.textContent = `${compScores.cylinder}%`;
+      if (cylBarEl) cylBarEl.style.width = `${compScores.cylinder}%`;
+
+      const lubScoreEl = document.getElementById('comp-score-lubrication');
+      const lubBarEl = document.getElementById('comp-bar-lubrication');
+      if (lubScoreEl) lubScoreEl.textContent = `${compScores.lub}%`;
+      if (lubBarEl) lubBarEl.style.width = `${compScores.lub}%`;
+
+      const brgScoreEl = document.getElementById('comp-score-bearing');
+      const brgBarEl = document.getElementById('comp-bar-bearing');
+      if (brgScoreEl) brgScoreEl.textContent = `${compScores.bearing}%`;
+      if (brgBarEl) brgBarEl.style.width = `${compScores.bearing}%`;
+
+      const coolScoreEl = document.getElementById('comp-score-cooling');
+      const coolBarEl = document.getElementById('comp-bar-cooling');
+      if (coolScoreEl) coolScoreEl.textContent = `${compScores.cooling}%`;
+      if (coolBarEl) coolBarEl.style.width = `${compScores.cooling}%`;
+
+      const fuelScoreEl = document.getElementById('comp-score-fuel');
+      const fuelBarEl = document.getElementById('comp-bar-fuel');
+      if (fuelScoreEl) fuelScoreEl.textContent = `${compScores.fuel}%`;
+      if (fuelBarEl) fuelBarEl.style.width = `${compScores.fuel}%`;
+
+      // 4. Update Faults Panel
+      const faultsStatusText = document.getElementById('faults-status-text');
+      const faultsCount = document.getElementById('faults-count-pill');
+      const faultsBadge = document.getElementById('faults-severity-badge');
+      const eventsList = document.getElementById('events-list');
+
+      if (faultsStatusText) {
+        faultsStatusText.textContent = preset.faultText;
+        faultsStatusText.className = `text-sm font-bold font-mono-tech flex items-center gap-2 ${
+          preset.activeFaults === 0 ? 'text-emerald-400' : preset.activeFaults === 1 ? 'text-amber-400' : 'text-rose-400'
+        }`;
+      }
+      if (faultsCount) faultsCount.textContent = String(preset.activeFaults);
+      if (faultsBadge) {
+        faultsBadge.textContent = `STATUS: ${preset.healthStatus}`;
+        faultsBadge.className = `px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold ${
+          preset.healthStatus === 'HEALTHY' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30' :
+          preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY' ? 'bg-amber-950/60 text-amber-300 border border-amber-500/30' :
+          'bg-rose-950/60 text-rose-300 border border-rose-500/30'
+        }`;
+      }
+
+      // Prepend simulated new alert to events list
+      if (eventsList && preset.newAlert) {
+        const item = document.createElement('div');
+        item.className = 'event-item flex items-center justify-between p-2 rounded bg-slate-950/60 border border-slate-800/60 text-xs font-mono-tech hover:border-slate-700 transition-colors animate-pulse';
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${
+              preset.newAlert.severity === 'NORMAL' ? 'bg-emerald-400' :
+              preset.newAlert.severity === 'WARNING' ? 'bg-amber-400' : 'bg-rose-500'
+            }"></span>
+            <span class="text-slate-200 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
+              ${preset.newAlert.description}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
+              ${preset.newAlert.subsystem}
+            </span>
+            <span class="text-[10px] text-cyan-400 font-mono-tech">
+              ${preset.newAlert.time}
+            </span>
+          </div>
+        `;
+        eventsList.prepend(item);
+      }
+
+      // 5. Update Charts display values
+      const chartRpm = document.getElementById('chart-rpm-val');
+      const chartTemp = document.getElementById('chart-temp-val');
+      const chartVib = document.getElementById('chart-vib-val');
+      const chartOil = document.getElementById('chart-oil-val');
+      if (chartRpm) chartRpm.textContent = `${preset.rpm.toLocaleString()} RPM`;
+      if (chartTemp) chartTemp.textContent = `${preset.temperature} °C`;
+      if (chartVib) chartVib.textContent = `${preset.vibration} mm/s`;
+      if (chartOil) chartOil.textContent = `${preset.oilPressure} bar`;
+    });
+  });
+</script>

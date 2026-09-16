@@ -1,0 +1,117 @@
+---
+import { initialEngineData } from '../data/engineTelemetry';
+
+const { components, metrics } = initialEngineData;
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between" id="engine-health">
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          SUBSYSTEM HEALTH DEGRADATION INDEX
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          MULTI-SENSOR KALMAN FUSION METRICS
+        </p>
+      </div>
+    </div>
+    <span class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
+      HEALTHY
+    </span>
+  </div>
+
+  <!-- Radial Gauge & Subsystems Flex Layout -->
+  <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 my-3 items-center">
+    
+    <!-- Left: Radial Gauge (4 cols on sm) -->
+    <div class="sm:col-span-4 flex flex-col items-center justify-center p-3 rounded-lg bg-[#0d1424] border border-slate-800/80 text-center">
+      <div class="relative w-28 h-28 flex items-center justify-center">
+        <!-- SVG Radial Gauge -->
+        <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#1e293b" stroke-width="8"/>
+          <circle
+            id="radial-health-ring"
+            cx="50"
+            cy="50"
+            r="40"
+            fill="transparent"
+            stroke="url(#radialHealthGrad)"
+            stroke-width="8"
+            stroke-dasharray="251.2"
+            stroke-dashoffset={251.2 * (1 - metrics.healthScore / 100)}
+            stroke-linecap="round"
+            class="transition-all duration-700 ease-out"
+          />
+          <defs>
+            <linearGradient id="radialHealthGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        
+        <div class="absolute flex flex-col items-center">
+          <span id="panel-health-score" class="text-3xl font-bold font-mono-tech text-slate-100">
+            {metrics.healthScore}
+          </span>
+          <span class="text-[10px] text-emerald-400 font-mono-tech font-semibold">SCORE</span>
+        </div>
+      </div>
+
+      <div class="mt-2 text-xs font-bold font-mono-tech text-emerald-400" id="panel-health-label">
+        INTEGRITY: 94%
+      </div>
+      <div class="text-[10px] text-slate-400 font-mono-tech">
+        MTBF EST: 1,250 HRS
+      </div>
+    </div>
+
+    <!-- Right: Component Progress Bars (8 cols on sm) -->
+    <div class="sm:col-span-8 space-y-2.5">
+      {components.map((comp) => {
+        const compKey = comp.name.toLowerCase().split(' ')[0];
+        return (
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs font-mono-tech">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
+                  {comp.tag}
+                </span>
+                <span class="text-slate-300 font-medium">{comp.name}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id={`comp-score-${compKey}`} class="font-bold text-slate-100">
+                  {comp.score}%
+                </span>
+                <span id={`comp-status-${compKey}`} class="text-[9px] px-1 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/20">
+                  {comp.status}
+                </span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden">
+              <div 
+                id={`comp-bar-${compKey}`} 
+                class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+                style={`width: ${comp.score}%`}
+              ></div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+  </div>
+
+  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+    <span>ANOMALY THRESHOLD: &lt;80%</span>
+    <span class="text-cyan-400">KALMAN PREDICTIVE DRIFT: 0.04% / HR</span>
+  </div>
+</div>

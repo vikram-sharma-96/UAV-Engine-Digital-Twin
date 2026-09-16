@@ -1,0 +1,90 @@
+---
+import { initialEngineData } from '../data/engineTelemetry';
+
+const { faults } = initialEngineData;
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between" id="fault-detection">
+  <!-- Top Bar -->
+  <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-amber-950/60 border border-amber-500/30 text-amber-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          FAULT DETECTION & ISOLATION (FDIR)
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          AUTONOMOUS ANOMALY CLASSIFICATION
+        </p>
+      </div>
+    </div>
+
+    <!-- Active Faults Counter -->
+    <div class="flex items-center gap-1.5 text-[10px] font-mono-tech px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+      <span class="text-slate-400">ACTIVE:</span>
+      <span id="faults-count-pill" class="text-emerald-400 font-bold">0</span>
+    </div>
+  </div>
+
+  <!-- Current Status Banner -->
+  <div class="my-3 p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex items-center justify-between">
+    <div>
+      <div class="text-[10px] font-mono-tech text-slate-400">CURRENT STATUS</div>
+      <div id="faults-status-text" class="text-sm font-bold font-mono-tech text-emerald-400 flex items-center gap-2">
+        <span id="faults-pulse-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        {faults.currentStatus}
+      </div>
+    </div>
+    <div class="text-right">
+      <span id="faults-severity-badge" class="px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">
+        STATUS: NOMINAL
+      </span>
+    </div>
+  </div>
+
+  <!-- Recent Events List -->
+  <div class="space-y-2" id="fault-events-container">
+    <div class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400 flex items-center justify-between">
+      <span>Recent Telemetry Events</span>
+      <span>REAL-TIME FIFO</span>
+    </div>
+
+    <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1" id="events-list">
+      {faults.recentEvents.map((evt) => (
+        <div class="event-item flex items-center justify-between p-2 rounded bg-slate-950/60 border border-slate-800/60 text-xs font-mono-tech hover:border-slate-700 transition-colors">
+          <div class="flex items-center gap-2">
+            <span class:list={[
+              "w-1.5 h-1.5 rounded-full shrink-0",
+              evt.severity === "NORMAL" ? "bg-emerald-400" :
+              evt.severity === "INFO" ? "bg-cyan-400" :
+              evt.severity === "WARNING" ? "bg-amber-400" : "bg-rose-500"
+            ]}></span>
+            <span class="text-slate-300 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
+              {evt.description}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
+              {evt.subsystem}
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono-tech">
+              {evt.time}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+    <span>DIAGNOSTIC ENGINE: LEVEL 2</span>
+    <span class="text-emerald-400">ISOLATION CONFIDENCE: 99.1%</span>
+  </div>
+</div>

@@ -1,0 +1,208 @@
+---
+import { initialEngineData } from '../data/engineTelemetry';
+
+const history = initialEngineData.historical;
+
+// Function to generate SVG path for charts
+function generatePath(values: number[], min: number, max: number, width: number = 280, height: number = 70): { path: string; area: string } {
+  const step = width / (values.length - 1);
+  const range = max - min || 1;
+  const points = values.map((val, idx) => {
+    const x = idx * step;
+    const normalized = (val - min) / range;
+    const y = height - (normalized * (height - 10) + 5);
+    return { x, y };
+  });
+
+  if (points.length === 0) return { path: "", area: "" };
+
+  // Generate smooth SVG polyline / curve
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x},${points[i].y}`;
+  }
+
+  const area = `${d} L ${points[points.length - 1].x},${height} L ${points[0].x},${height} Z`;
+  return { path: d, area };
+}
+
+// Extract historical arrays
+const rpmVals = history.map(h => h.rpm);
+const tempVals = history.map(h => h.temperature);
+const vibVals = history.map(h => h.vibration);
+const oilVals = history.map(h => h.oilPressure);
+
+const rpmChart = generatePath(rpmVals, 5150, 5250);
+const tempChart = generatePath(tempVals, 70, 85);
+const vibChart = generatePath(vibVals, 0.8, 1.6);
+const oilChart = generatePath(oilVals, 3.8, 4.8);
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm" id="sensor-data">
+  <!-- Section Title Bar -->
+  <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          LIVE SENSOR DATA TELEMETRY
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          SYNCHRONIZED HISTORICAL CHANNELS (10-MIN BUFFER)
+        </p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 text-[10px] font-mono-tech text-slate-400">
+      <span class="inline-flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        STREAM ACTIVE
+      </span>
+      <span class="text-slate-400">BUFFER: 600 SAMPLES</span>
+    </div>
+  </div>
+
+  <!-- 4 Mini High-Density Charts Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+    
+    <!-- CHART 1: RPM OVER TIME -->
+    <div class="rounded-lg bg-[#0d1424] border border-slate-800/80 p-3 flex flex-col justify-between hover:border-cyan-500/30 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech">
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-sm bg-cyan-400"></span>
+          ENGINE RPM
+        </span>
+        <span class="text-cyan-400 font-bold" id="chart-rpm-val">5,200 RPM</span>
+      </div>
+      
+      <!-- Chart Canvas -->
+      <div class="relative w-full h-[85px] my-2">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 280 70" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradRpm" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Horizontal Grid Lines -->
+          <line x1="0" y1="15" x2="280" y2="15" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="40" x2="280" y2="40" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="65" x2="280" y2="65" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <!-- Data Area & Line -->
+          <path d={rpmChart.area} fill="url(#gradRpm)"/>
+          <path id="path-chart-rpm" d={rpmChart.path} fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center text-[9px] font-mono-tech text-slate-400 pt-1 border-t border-slate-800/60">
+        <span>15:00</span>
+        <span class="text-slate-400">NOM: 5,200</span>
+        <span>15:10</span>
+      </div>
+    </div>
+
+    <!-- CHART 2: TEMPERATURE OVER TIME -->
+    <div class="rounded-lg bg-[#0d1424] border border-slate-800/80 p-3 flex flex-col justify-between hover:border-emerald-500/30 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech">
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-sm bg-emerald-400"></span>
+          TEMPERATURE
+        </span>
+        <span class="text-emerald-400 font-bold" id="chart-temp-val">78 °C</span>
+      </div>
+      
+      <div class="relative w-full h-[85px] my-2">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 280 70" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradTemp" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="15" x2="280" y2="15" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="40" x2="280" y2="40" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="65" x2="280" y2="65" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <path d={tempChart.area} fill="url(#gradTemp)"/>
+          <path id="path-chart-temp" d={tempChart.path} fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center text-[9px] font-mono-tech text-slate-400 pt-1 border-t border-slate-800/60">
+        <span>15:00</span>
+        <span class="text-slate-400">LIMIT: 95°C</span>
+        <span>15:10</span>
+      </div>
+    </div>
+
+    <!-- CHART 3: VIBRATION OVER TIME -->
+    <div class="rounded-lg bg-[#0d1424] border border-slate-800/80 p-3 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech">
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-sm bg-teal-400"></span>
+          VIBRATION RMS
+        </span>
+        <span class="text-teal-400 font-bold" id="chart-vib-val">1.2 mm/s</span>
+      </div>
+      
+      <div class="relative w-full h-[85px] my-2">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 280 70" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradVib" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="15" x2="280" y2="15" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="40" x2="280" y2="40" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="65" x2="280" y2="65" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <path d={vibChart.area} fill="url(#gradVib)"/>
+          <path id="path-chart-vib" d={vibChart.path} fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center text-[9px] font-mono-tech text-slate-400 pt-1 border-t border-slate-800/60">
+        <span>15:00</span>
+        <span class="text-slate-400">ALERT: &gt;2.5</span>
+        <span>15:10</span>
+      </div>
+    </div>
+
+    <!-- CHART 4: OIL PRESSURE OVER TIME -->
+    <div class="rounded-lg bg-[#0d1424] border border-slate-800/80 p-3 flex flex-col justify-between hover:border-blue-500/30 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech">
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-sm bg-blue-400"></span>
+          OIL PRESSURE
+        </span>
+        <span class="text-blue-400 font-bold" id="chart-oil-val">4.3 bar</span>
+      </div>
+      
+      <div class="relative w-full h-[85px] my-2">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 280 70" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradOil" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="15" x2="280" y2="15" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="40" x2="280" y2="40" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <line x1="0" y1="65" x2="280" y2="65" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2 2"/>
+          <path d={oilChart.area} fill="url(#gradOil)"/>
+          <path id="path-chart-oil" d={oilChart.path} fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center text-[9px] font-mono-tech text-slate-400 pt-1 border-t border-slate-800/60">
+        <span>15:00</span>
+        <span class="text-slate-400">MIN: 2.0 bar</span>
+        <span>15:10</span>
+      </div>
+    </div>
+
+  </div>
+</div>

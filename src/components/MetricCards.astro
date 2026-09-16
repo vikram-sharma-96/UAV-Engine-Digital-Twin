@@ -1,0 +1,156 @@
+---
+import { initialEngineData } from '../data/engineTelemetry';
+
+const { metrics } = initialEngineData;
+---
+
+<section class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-4" aria-label="Engine Telemetry Metrics">
+  
+  <!-- 1. ENGINE HEALTH -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">ENGINE HEALTH</span>
+      <span id="metric-health-status" class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+        {metrics.healthStatus}
+      </span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-health-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100 tracking-tight">
+        {metrics.healthScore}
+      </span>
+      <span class="text-sm font-semibold text-emerald-400">%</span>
+    </div>
+
+    <!-- Mini Progress Gauge -->
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-health-bar" class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full transition-all duration-500" style={`width: ${metrics.healthScore}%`}></div>
+    </div>
+    
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>INDEX SCORE</span>
+      <span class="text-slate-400">TARGET &gt;90%</span>
+    </div>
+  </div>
+
+  <!-- 2. ENGINE RPM -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">ENGINE RPM</span>
+      <span class="text-[10px] text-cyan-400/90 bg-cyan-950/40 px-1 rounded border border-cyan-500/20">TACH</span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-rpm-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-cyan-400 tracking-tight">
+        {metrics.rpm.toLocaleString()}
+      </span>
+      <span class="text-xs text-slate-400 font-mono-tech">RPM</span>
+    </div>
+
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-rpm-bar" class="bg-cyan-400 h-full rounded-full transition-all duration-500" style="width: 76%"></div>
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>NOMINAL:</span>
+      <span class="text-slate-400">{metrics.rpmNominal}</span>
+    </div>
+  </div>
+
+  <!-- 3. ENGINE TEMPERATURE -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">ENGINE TEMP</span>
+      <span id="metric-temp-badge" class="text-[10px] text-emerald-400/90 bg-emerald-950/40 px-1 rounded border border-emerald-500/20">CHT-1</span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-temp-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100 tracking-tight">
+        {metrics.temperature}
+      </span>
+      <span class="text-xs text-slate-400 font-mono-tech">°C</span>
+    </div>
+
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-temp-bar" class="bg-amber-400 h-full rounded-full transition-all duration-500" style="width: 62%"></div>
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>LIMIT &lt;95°C</span>
+      <span class="text-slate-400">{metrics.temperatureNominal}</span>
+    </div>
+  </div>
+
+  <!-- 4. OIL PRESSURE -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">OIL PRESSURE</span>
+      <span class="text-[10px] text-blue-400/90 bg-blue-950/40 px-1 rounded border border-blue-500/20">LUB</span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-oil-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100 tracking-tight">
+        {metrics.oilPressure}
+      </span>
+      <span class="text-xs text-slate-400 font-mono-tech">bar</span>
+    </div>
+
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-oil-bar" class="bg-blue-400 h-full rounded-full transition-all duration-500" style="width: 71%"></div>
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>CRANKCASE</span>
+      <span class="text-slate-400">{metrics.oilPressureNominal}</span>
+    </div>
+  </div>
+
+  <!-- 5. VIBRATION -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">VIBRATION</span>
+      <span id="metric-vib-badge" class="text-[10px] text-teal-400/90 bg-teal-950/40 px-1 rounded border border-teal-500/20">ACCEL</span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-vib-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100 tracking-tight">
+        {metrics.vibration}
+      </span>
+      <span class="text-xs text-slate-400 font-mono-tech">mm/s</span>
+    </div>
+
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-vib-bar" class="bg-teal-400 h-full rounded-full transition-all duration-500" style="width: 40%"></div>
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>RMS 3-AXIS</span>
+      <span class="text-slate-400">{metrics.vibrationNominal}</span>
+    </div>
+  </div>
+
+  <!-- 6. FUEL CONSUMPTION -->
+  <div class="relative overflow-hidden rounded-lg bg-[#0d1322] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-cyan-500/40 transition-all duration-300 group shadow-sm">
+    <div class="flex items-center justify-between gap-1 text-[11px] font-mono-tech text-slate-400">
+      <span class="tracking-wide">FUEL FLOW</span>
+      <span class="text-[10px] text-amber-400/90 bg-amber-950/40 px-1 rounded border border-amber-500/20">FLOW</span>
+    </div>
+    
+    <div class="my-2 flex items-baseline gap-1.5">
+      <span id="metric-fuel-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100 tracking-tight">
+        {metrics.fuelConsumption}
+      </span>
+      <span class="text-xs text-slate-400 font-mono-tech">L/h</span>
+    </div>
+
+    <div class="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+      <div id="metric-fuel-bar" class="bg-indigo-400 h-full rounded-full transition-all duration-500" style="width: 55%"></div>
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-400 font-mono-tech flex justify-between">
+      <span>CRUISE ECON</span>
+      <span class="text-slate-400">{metrics.fuelNominal}</span>
+    </div>
+  </div>
+
+</section>

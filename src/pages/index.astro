@@ -1,11 +1,113 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Header from '../components/Header.astro';
+import Sidebar from '../components/Sidebar.astro';
+import MetricCards from '../components/MetricCards.astro';
+import DigitalTwinViewer from '../components/DigitalTwinViewer.astro';
+import TelemetryCharts from '../components/TelemetryCharts.astro';
+import EngineHealthPanel from '../components/EngineHealthPanel.astro';
+import FaultMonitoringPanel from '../components/FaultMonitoringPanel.astro';
+import PredictiveMaintenance from '../components/PredictiveMaintenance.astro';
+import AiAgentPlaceholder from '../components/AiAgentPlaceholder.astro';
+import FaultSimulationPanel from '../components/FaultSimulationPanel.astro';
+import RealTimeStatusPanel from '../components/RealTimeStatusPanel.astro';
+import SettingsDialog from '../components/SettingsDialog.astro';
 ---
 
-<Layout>
-	<Welcome />
+<Layout 
+	title="AI Digital Twin | UAV Aero Piston Engines" 
+	description="AI-Enabled Real-Time Digital Twin System for Health Monitoring & Fault Prediction"
+>
+	<!-- Header -->
+	<Header />
+
+	<!-- Main Body Layout: Sidebar + Dashboard Content -->
+	<div class="flex-1 flex flex-col lg:flex-row w-full min-h-[calc(100vh-65px)]">
+		
+		<!-- Sidebar Navigation -->
+		<Sidebar />
+
+		<!-- Main Dashboard Viewport -->
+		<main class="flex-1 p-4 lg:p-6 space-y-5 overflow-x-hidden" id="overview">
+			
+			<!-- Project Subtitle & Mission Banner -->
+			<div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0a0f1e]/90 border border-slate-800/90 shadow-sm">
+				<div>
+					<div class="flex items-center gap-2">
+						<span class="text-xs font-mono-tech font-bold text-cyan-400 uppercase tracking-wider">
+							MISSION TELEMETRY CONSOLE
+						</span>
+						<span class="text-slate-600">|</span>
+						<span class="text-xs font-mono-tech text-slate-400">
+							SYS-ID: UAV-PT900-X1
+						</span>
+					</div>
+					<h2 class="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+						AI-Enabled Real-Time Digital Twin System for Health Monitoring & Fault Prediction
+					</h2>
+				</div>
+
+				<div class="flex items-center gap-2 text-xs font-mono-tech">
+					<div class="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 flex items-center gap-1.5">
+						<span class="text-slate-500">FLIGHT REGIME:</span>
+						<span class="text-emerald-400 font-bold">ALT 2,400m CRUISE</span>
+					</div>
+					<div class="hidden sm:flex px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 items-center gap-1.5">
+						<span class="text-slate-500">PROPULSION:</span>
+						<span class="text-cyan-400 font-bold">AERO 4-CYL BOXER</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- 1. Top Summary Cards (6 Realistic Engineering Metrics) -->
+			<MetricCards />
+
+			<!-- 2. Fault Simulation Testbed (Interactive UI Triggers) -->
+			<FaultSimulationPanel />
+
+			<!-- 3. Central Digital Twin Visualization (Core Centerpiece) -->
+			<DigitalTwinViewer />
+
+			<!-- 4. Live Sensor Data (4 Trend Charts) -->
+			<TelemetryCharts />
+
+			<!-- 5. Split Section: Subsystem Health & Fault Detection -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+				<!-- Engine Subsystem Health Index -->
+				<EngineHealthPanel />
+
+				<!-- Fault Detection & Isolation (FDIR) -->
+				<FaultMonitoringPanel />
+			</div>
+
+			<!-- 6. Split Section: Predictive Maintenance & Real-Time Status -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+				<!-- Predictive Maintenance Prognostics -->
+				<PredictiveMaintenance />
+
+				<!-- Real-Time Hardware & Telemetry Bus Status -->
+				<RealTimeStatusPanel />
+			</div>
+
+			<!-- 7. AI Engine Health Agent (Ollama Interface Stub) -->
+			<AiAgentPlaceholder />
+
+			<!-- Footer Metadata -->
+			<footer class="pt-4 pb-2 border-t border-slate-800/80 text-[11px] font-mono-tech text-slate-400 flex flex-wrap items-center justify-between gap-3">
+				<div>
+					UAV AERO PISTON ENGINE DIGITAL TWIN &copy; 2026 // AVIONICS HEALTH MONITORING SPEC 4.2
+				</div>
+				<div class="flex items-center gap-4 text-slate-400">
+					<span>CAN-BUS: 1000 kBaud</span>
+					<span>FDIR PROTOCOL: MIL-STD-1553B COMPLIANT</span>
+					<span class="text-cyan-400">INTERFACE READY</span>
+				</div>
+			</footer>
+
+		</main>
+
+	</div>
+
+	<!-- Telemetry Settings Dialog -->
+	<SettingsDialog />
 </Layout>

@@ -1,0 +1,93 @@
+---
+// SettingsDialog.astro - Avionics Telemetry Configuration Modal
+---
+
+<div 
+  id="settings-dialog" 
+  class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="settings-title"
+>
+  <div class="relative w-full max-w-lg rounded-xl bg-[#0d1424] border border-cyan-500/40 p-5 shadow-[0_0_40px_rgba(6,182,212,0.15)] font-mono-tech text-xs">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <div class="p-1 rounded bg-cyan-950 text-cyan-400 border border-cyan-500/40">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </div>
+        <h2 id="settings-title" class="text-sm font-bold uppercase tracking-wider text-slate-100">
+          UAV TELEMETRY & DIGITAL TWIN SETTINGS
+        </h2>
+      </div>
+
+      <button id="close-settings-btn" class="text-slate-400 hover:text-slate-100 p-1 rounded hover:bg-slate-800">
+        ✕
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="my-4 space-y-3.5">
+      <div class="space-y-1">
+        <label class="text-slate-400 block text-[11px]">CAN-BUS HARDWARE PORT</label>
+        <select class="w-full bg-[#080d1a] border border-slate-700 rounded p-2 text-slate-200">
+          <option>CAN0 (1.0 Mbps - High Speed Flight Avionics)</option>
+          <option>CAN1 (500 kbps - Ground Station Telemetry)</option>
+          <option>MOCK-SIMULATOR (Virtual In-Memory Loopback)</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-slate-400 block text-[11px]">SAMPLING RATE</label>
+          <input type="text" value="100 Hz (10 ms)" readonly class="w-full bg-[#080d1a] border border-slate-700 rounded p-2 text-slate-300"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-slate-400 block text-[11px]">DSP KALMAN FILTER</label>
+          <input type="text" value="Enabled (Q=0.01, R=0.1)" readonly class="w-full bg-[#080d1a] border border-slate-700 rounded p-2 text-emerald-400"/>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-slate-400 block text-[11px]">AI BACKEND INTEGRATION</label>
+        <div class="p-2.5 rounded bg-[#080d1a] border border-amber-500/30 flex items-center justify-between text-[11px]">
+          <span class="text-slate-300">Ollama API Host</span>
+          <span class="text-amber-400 font-bold">http://localhost:11434 (Standby)</span>
+        </div>
+      </div>
+
+      <div class="p-2.5 rounded bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
+        <strong>NOTE:</strong> Telemetry streams and AI reasoning endpoints will connect during Stage 2 backend integration. Current view displays real-time simulated avionics telemetry.
+      </div>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+      <button id="dismiss-settings-btn" class="px-4 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold tracking-wide transition-colors">
+        SAVE & CLOSE
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const dialog = document.getElementById('settings-dialog');
+  const closeBtn = document.getElementById('close-settings-btn');
+  const dismissBtn = document.getElementById('dismiss-settings-btn');
+
+  function toggleDialog() {
+    dialog?.classList.toggle('hidden');
+    dialog?.classList.toggle('flex');
+  }
+
+  window.addEventListener('toggle-settings-dialog', toggleDialog);
+  closeBtn?.addEventListener('click', toggleDialog);
+  dismissBtn?.addEventListener('click', toggleDialog);
+  dialog?.addEventListener('click', (e) => {
+    if (e.target === dialog) toggleDialog();
+  });
+</script>

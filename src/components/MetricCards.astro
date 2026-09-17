@@ -154,3 +154,118 @@ const { metrics } = initialEngineData;
   </div>
 
 </section>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  const healthVal = document.getElementById('metric-health-val');
+  const healthStatus = document.getElementById('metric-health-status');
+  const healthBar = document.getElementById('metric-health-bar');
+  const rpmVal = document.getElementById('metric-rpm-val');
+  const rpmBar = document.getElementById('metric-rpm-bar');
+  const tempVal = document.getElementById('metric-temp-val');
+  const tempBar = document.getElementById('metric-temp-bar');
+  const tempBadge = document.getElementById('metric-temp-badge');
+  const oilVal = document.getElementById('metric-oil-val');
+  const oilBar = document.getElementById('metric-oil-bar');
+  const vibVal = document.getElementById('metric-vib-val');
+  const vibBar = document.getElementById('metric-vib-bar');
+  const vibBadge = document.getElementById('metric-vib-badge');
+  const fuelVal = document.getElementById('metric-fuel-val');
+  const fuelBar = document.getElementById('metric-fuel-bar');
+
+  function statusBadgeClass(status: string): string {
+    if (status === 'HEALTHY') return 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+    if (status === 'ADVISORY' || status === 'WARNING') return 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-950/60 text-amber-400 border border-amber-500/30';
+    return 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-950/60 text-rose-400 border border-rose-500/30';
+  }
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    // Health
+    if (healthVal) healthVal.textContent = String(s.healthScore);
+    if (healthStatus) {
+      healthStatus.textContent = s.engineStatus;
+      healthStatus.className = statusBadgeClass(s.engineStatus);
+    }
+    if (healthBar) healthBar.style.width = `${s.healthScore}%`;
+
+    // RPM
+    if (rpmVal) rpmVal.textContent = s.rpm.toLocaleString();
+    if (rpmBar) rpmBar.style.width = `${Math.round(((s.rpm - 3000) / 3500) * 100)}%`;
+
+    // Temperature
+    if (tempVal) tempVal.textContent = String(s.temperature);
+    if (tempBar) {
+      const tempPct = Math.round(((s.temperature - 40) / 110) * 100);
+      tempBar.style.width = `${tempPct}%`;
+      if (s.temperature > 95) {
+        tempBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+      } else if (s.temperature > 85) {
+        tempBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+      } else {
+        tempBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+      }
+    }
+    if (tempBadge) {
+      if (s.temperature > 95) {
+        tempBadge.className = 'text-[10px] text-rose-400/90 bg-rose-950/40 px-1 rounded border border-rose-500/20';
+        tempBadge.textContent = 'HOT';
+      } else if (s.temperature > 85) {
+        tempBadge.className = 'text-[10px] text-amber-400/90 bg-amber-950/40 px-1 rounded border border-amber-500/20';
+        tempBadge.textContent = 'WARM';
+      } else {
+        tempBadge.className = 'text-[10px] text-emerald-400/90 bg-emerald-950/40 px-1 rounded border border-emerald-500/20';
+        tempBadge.textContent = 'CHT-1';
+      }
+    }
+
+    // Oil Pressure
+    if (oilVal) oilVal.textContent = String(s.oilPressure);
+    if (oilBar) {
+      const oilPct = Math.round(((s.oilPressure - 0.5) / 5.5) * 100);
+      oilBar.style.width = `${oilPct}%`;
+      if (s.oilPressure < 2.5) {
+        oilBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+      } else if (s.oilPressure < 3.5) {
+        oilBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+      } else {
+        oilBar.className = 'bg-blue-400 h-full rounded-full transition-all duration-500';
+      }
+    }
+
+    // Vibration
+    if (vibVal) vibVal.textContent = String(s.vibration);
+    if (vibBar) {
+      const vibPct = Math.round(((s.vibration - 0.3) / 7.7) * 100);
+      vibBar.style.width = `${vibPct}%`;
+      if (s.vibration > 3.5) {
+        vibBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+      } else if (s.vibration > 2.0) {
+        vibBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+      } else {
+        vibBar.className = 'bg-teal-400 h-full rounded-full transition-all duration-500';
+      }
+    }
+    if (vibBadge) {
+      if (s.vibration > 3.5) {
+        vibBadge.className = 'text-[10px] text-rose-400/90 bg-rose-950/40 px-1 rounded border border-rose-500/20';
+        vibBadge.textContent = 'HIGH';
+      } else if (s.vibration > 2.0) {
+        vibBadge.className = 'text-[10px] text-amber-400/90 bg-amber-950/40 px-1 rounded border border-amber-500/20';
+        vibBadge.textContent = 'ELEVATED';
+      } else {
+        vibBadge.className = 'text-[10px] text-teal-400/90 bg-teal-950/40 px-1 rounded border border-teal-500/20';
+        vibBadge.textContent = 'ACCEL';
+      }
+    }
+
+    // Fuel Flow
+    if (fuelVal) fuelVal.textContent = String(s.fuelFlow);
+    if (fuelBar) {
+      const fuelPct = Math.round(((s.fuelFlow - 1.0) / 5.0) * 100);
+      fuelBar.style.width = `${fuelPct}%`;
+    }
+  }) as EventListener);
+</script>

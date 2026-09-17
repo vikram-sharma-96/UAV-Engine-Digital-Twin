@@ -206,3 +206,129 @@ const oilChart = generatePath(oilVals, 3.8, 4.8);
 
   </div>
 </div>
+
+<script>
+  import { simulator } from '../data/engineSimulator';
+  import type { EngineState, HistoryPoint } from '../data/engineSimulator';
+
+  // Chart SVG path elements
+  const pathRpm = document.getElementById('path-chart-rpm');
+  const pathTemp = document.getElementById('path-chart-temp');
+  const pathVib = document.getElementById('path-chart-vib');
+  const pathOil = document.getElementById('path-chart-oil');
+
+  // Area fill paths (siblings of the line paths — find by parent SVG)
+  const areaRpm = pathRpm?.previousElementSibling as SVGPathElement | null;
+  const areaTemp = pathTemp?.previousElementSibling as SVGPathElement | null;
+  const areaVib = pathVib?.previousElementSibling as SVGPathElement | null;
+  const areaOil = pathOil?.previousElementSibling as SVGPathElement | null;
+
+  // Chart value labels
+  const chartRpmVal = document.getElementById('chart-rpm-val');
+  const chartTempVal = document.getElementById('chart-temp-val');
+  const chartVibVal = document.getElementById('chart-vib-val');
+  const chartOilVal = document.getElementById('chart-oil-val');
+
+  const WIDTH = 280;
+  const HEIGHT = 70;
+
+  function generatePath(values: number[], min: number, max: number): { path: string; area: string } {
+    if (values.length === 0) return { path: '', area: '' };
+
+    const step = WIDTH / (values.length - 1 || 1);
+    const range = max - min || 1;
+    const points = values.map((val, idx) => {
+      const x = idx * step;
+      const normalized = (val - min) / range;
+      const y = HEIGHT - (normalized * (HEIGHT - 10) + 5);
+      return { x, y };
+    });
+
+    let d = `M ${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      d += ` L ${points[i].x},${points[i].y}`;
+    }
+
+    const area = `${d} L ${points[points.length - 1].x},${HEIGHT} L ${points[0].x},${HEIGHT} Z`;
+    return { path: d, area };
+  }
+
+  function getMinMax(values: number[], padding: number = 0.1): { min: number; max: number } {
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    return {
+      min: min - range * padding,
+      max: max + range * padding,
+    };
+  }
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+    const history = simulator.getHistory();
+
+    if (history.length < 2) return;
+
+    // Extract arrays
+    const rpmVals = history.map(h => h.rpm);
+    const tempVals = history.map(h => h.temperature);
+    const vibVals = history.map(h => h.vibration);
+    const oilVals = history.map(h => h.oilPressure);
+
+    // RPM chart
+    const rpmBounds = getMinMax(rpmVals);
+    const rpmPaths = generatePath(rpmVals, rpmBounds.min, rpmBounds.max);
+    if (pathRpm) pathRpm.setAttribute('d', rpmPaths.path);
+    if (areaRpm) areaRpm.setAttribute('d', rpmPaths.area);
+    if (chartRpmVal) chartRpmVal.textContent = `${s.rpm.toLocaleString()} RPM`;
+
+    // Temperature chart
+    const tempBounds = getMinMax(tempVals);
+    const tempPaths = generatePath(tempVals, tempBounds.min, tempBounds.max);
+    if (pathTemp) {
+      pathTemp.setAttribute('d', tempPaths.path);
+      // Color shift based on temperature
+      if (s.temperature > 95) {
+        pathTemp.setAttribute('stroke', '#ef4444'); // rose-500
+      } else if (s.temperature > 85) {
+        pathTemp.setAttribute('stroke', '#f59e0b'); // amber-500
+      } else {
+        pathTemp.setAttribute('stroke', '#10b981'); // emerald-500
+      }
+    }
+    if (areaTemp) areaTemp.setAttribute('d', tempPaths.area);
+    if (chartTempVal) chartTempVal.textContent = `${s.temperature} °C`;
+
+    // Vibration chart
+    const vibBounds = getMinMax(vibVals);
+    const vibPaths = generatePath(vibVals, vibBounds.min, vibBounds.max);
+    if (pathVib) {
+      pathVib.setAttribute('d', vibPaths.path);
+      if (s.vibration > 3.5) {
+        pathVib.setAttribute('stroke', '#ef4444');
+      } else if (s.vibration > 2.0) {
+        pathVib.setAttribute('stroke', '#f59e0b');
+      } else {
+        pathVib.setAttribute('stroke', '#2dd4bf');
+      }
+    }
+    if (areaVib) areaVib.setAttribute('d', vibPaths.area);
+    if (chartVibVal) chartVibVal.textContent = `${s.vibration} mm/s`;
+
+    // Oil Pressure chart
+    const oilBounds = getMinMax(oilVals);
+    const oilPaths = generatePath(oilVals, oilBounds.min, oilBounds.max);
+    if (pathOil) {
+      pathOil.setAttribute('d', oilPaths.path);
+      if (s.oilPressure < 2.5) {
+        pathOil.setAttribute('stroke', '#ef4444');
+      } else if (s.oilPressure < 3.5) {
+        pathOil.setAttribute('stroke', '#f59e0b');
+      } else {
+        pathOil.setAttribute('stroke', '#3b82f6');
+      }
+    }
+    if (areaOil) areaOil.setAttribute('d', oilPaths.area);
+    if (chartOilVal) chartOilVal.textContent = `${s.oilPressure} bar`;
+  }) as EventListener);
+</script>

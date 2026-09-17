@@ -376,13 +376,18 @@
 </div>
 
 <script>
-  // Mode toggles: Schematic vs Thermal
+  import type { EngineState } from '../data/engineSimulator';
+
+  // ─── Existing Mode Toggle Logic (preserved) ───
   const btnWireframe = document.getElementById('btn-mode-wireframe');
   const btnThermal = document.getElementById('btn-mode-thermal');
   const cyl1Flame = document.getElementById('cyl1-flame');
   const cyl2Flame = document.getElementById('cyl2-flame');
 
+  let thermalModeActive = false;
+
   btnThermal?.addEventListener('click', () => {
+    thermalModeActive = true;
     btnThermal.classList.add('text-cyan-400', 'bg-cyan-950/60', 'border', 'border-cyan-500/30');
     btnThermal.classList.remove('text-slate-400');
     btnWireframe?.classList.remove('text-cyan-400', 'bg-cyan-950/60', 'border', 'border-cyan-500/30');
@@ -394,6 +399,7 @@
   });
 
   btnWireframe?.addEventListener('click', () => {
+    thermalModeActive = false;
     btnWireframe.classList.add('text-cyan-400', 'bg-cyan-950/60', 'border', 'border-cyan-500/30');
     btnWireframe.classList.remove('text-slate-400');
     btnThermal?.classList.remove('text-cyan-400', 'bg-cyan-950/60', 'border', 'border-cyan-500/30');
@@ -403,4 +409,118 @@
     cyl1Flame?.setAttribute('fill', 'url(#combustionGlow)');
     cyl2Flame?.setAttribute('fill', 'url(#combustionGlow)');
   });
+
+  // ─── Engine State Update Listener ───
+  const twinStatusText = document.getElementById('twin-status-text');
+  const twinStatusPill = document.getElementById('twin-status-pill');
+  const twinStatusDot = document.getElementById('twin-status-dot');
+  const twinRpm = document.getElementById('twin-rpm-display');
+  const twinTemp = document.getElementById('twin-temp-display');
+  const twinOil = document.getElementById('twin-oil-display');
+  const twinVib = document.getElementById('twin-vib-display');
+  const twinTempStatus = document.getElementById('twin-temp-status');
+  const twinOilStatus = document.getElementById('twin-oil-status');
+  const twinVibStatus = document.getElementById('twin-vib-status');
+
+  // Get crankshaft animation elements for speed control
+  const crankAnimations = document.querySelectorAll('.crank-rotation animateTransform');
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    // Status text
+    const statusLabels: Record<string, string> = {
+      'HEALTHY': 'ENGINE STATUS: HEALTHY',
+      'ADVISORY': 'ENGINE STATUS: ADVISORY',
+      'WARNING': 'ENGINE STATUS: WARNING',
+      'CRITICAL': 'ENGINE STATUS: CRITICAL',
+    };
+    if (twinStatusText) twinStatusText.textContent = statusLabels[s.engineStatus] || `ENGINE STATUS: ${s.engineStatus}`;
+
+    // Status pill styling
+    if (twinStatusPill) {
+      if (s.engineStatus === 'HEALTHY') {
+        twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-mono-tech font-semibold tracking-wider shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-colors';
+      } else if (s.engineStatus === 'ADVISORY' || s.engineStatus === 'WARNING') {
+        twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-amber-950/60 border border-amber-500/50 text-amber-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.15)] transition-colors';
+      } else {
+        twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-rose-950/70 border border-rose-500/60 text-rose-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.2)] transition-colors';
+      }
+    }
+
+    // Status dot color
+    if (twinStatusDot) {
+      if (s.engineStatus === 'HEALTHY') {
+        twinStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+      } else if (s.engineStatus === 'ADVISORY' || s.engineStatus === 'WARNING') {
+        twinStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      } else {
+        twinStatusDot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
+      }
+    }
+
+    // Sensor display values
+    if (twinRpm) twinRpm.textContent = s.rpm.toLocaleString();
+    if (twinTemp) twinTemp.textContent = String(s.temperature);
+    if (twinOil) twinOil.textContent = String(s.oilPressure);
+    if (twinVib) twinVib.textContent = String(s.vibration);
+
+    // Temperature status
+    if (twinTempStatus) {
+      if (s.temperature > 95) {
+        twinTempStatus.textContent = 'CRITICAL';
+        twinTempStatus.className = 'text-rose-400';
+      } else if (s.temperature > 85) {
+        twinTempStatus.textContent = 'ELEVATED';
+        twinTempStatus.className = 'text-amber-400';
+      } else {
+        twinTempStatus.textContent = 'HEALTHY';
+        twinTempStatus.className = 'text-emerald-400';
+      }
+    }
+
+    // Oil pressure status
+    if (twinOilStatus) {
+      if (s.oilPressure < 2.5) {
+        twinOilStatus.textContent = 'LOW';
+        twinOilStatus.className = 'text-rose-400';
+      } else if (s.oilPressure < 3.5) {
+        twinOilStatus.textContent = 'WARNING';
+        twinOilStatus.className = 'text-amber-400';
+      } else {
+        twinOilStatus.textContent = 'NORMAL';
+        twinOilStatus.className = 'text-emerald-400';
+      }
+    }
+
+    // Vibration status
+    if (twinVibStatus) {
+      if (s.vibration > 3.5) {
+        twinVibStatus.textContent = 'HIGH RMS';
+        twinVibStatus.className = 'text-rose-400';
+      } else if (s.vibration > 2.0) {
+        twinVibStatus.textContent = 'ELEVATED';
+        twinVibStatus.className = 'text-amber-400';
+      } else {
+        twinVibStatus.textContent = 'LOW RMS';
+        twinVibStatus.className = 'text-emerald-400';
+      }
+    }
+
+    // Adjust crankshaft animation speed based on RPM (lower RPM = slower spin)
+    const crankDur = Math.max(0.8, 5200 / s.rpm * 2.4).toFixed(1);
+    crankAnimations.forEach(anim => {
+      anim.setAttribute('dur', `${crankDur}s`);
+    });
+
+    // Auto-switch to thermal glow if in critical temperature state
+    if (s.temperature > 95 && !thermalModeActive) {
+      cyl1Flame?.setAttribute('fill', 'url(#thermalGlow)');
+      cyl2Flame?.setAttribute('fill', 'url(#thermalGlow)');
+    } else if (s.temperature <= 95 && !thermalModeActive) {
+      cyl1Flame?.setAttribute('fill', 'url(#combustionGlow)');
+      cyl2Flame?.setAttribute('fill', 'url(#combustionGlow)');
+    }
+  }) as EventListener);
 </script>
+

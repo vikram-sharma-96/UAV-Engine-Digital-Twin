@@ -70,25 +70,68 @@ const simulationOptions = [
     ))}
   </div>
 
-  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-    <span>TESTBED INJECTOR: CLIENT-SIDE STATE DISPATCH</span>
-    <span class="text-slate-400">NO ML / BACKEND CALLS REQUIRED</span>
+  <!-- Live Simulation Status Row -->
+  <div class="pt-2 border-t border-slate-800/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono-tech">
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-400">MODE:</span>
+      <span id="sim-info-mode" class="text-emerald-400 font-bold">NORMAL</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-400">FAULT:</span>
+      <span id="sim-info-fault" class="text-slate-300 font-bold">None</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-400">RISK:</span>
+      <span id="sim-info-risk" class="text-emerald-400 font-bold">LOW</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-400">ENGINE:</span>
+      <span id="sim-info-status" class="text-emerald-400 font-bold">HEALTHY</span>
+    </div>
   </div>
 </div>
 
 <script>
-  import { simulationPresets } from '../data/engineTelemetry';
+  import { simulator } from '../data/engineSimulator';
+  import type { SimulationMode, EngineState } from '../data/engineSimulator';
 
   const simBtns = document.querySelectorAll('.sim-btn');
   const activeBadge = document.getElementById('active-sim-badge');
 
+  // Fault panel info elements
+  const simInfoMode = document.getElementById('sim-info-mode');
+  const simInfoFault = document.getElementById('sim-info-fault');
+  const simInfoRisk = document.getElementById('sim-info-risk');
+  const simInfoStatus = document.getElementById('sim-info-status');
+
+  const MODE_LABELS: Record<SimulationMode, string> = {
+    normal: 'NORMAL OPERATION',
+    overheating: 'SIMULATE OVERHEATING',
+    bearing: 'SIMULATE BEARING FAULT',
+    oilPressure: 'SIMULATE LOW OIL PRESSURE',
+    degradation: 'SIMULATE PERFORMANCE DEGRADATION',
+  };
+
+  // Helper to get status color class
+  function statusColorClass(status: string): string {
+    if (status === 'HEALTHY') return 'text-emerald-400 font-bold';
+    if (status === 'ADVISORY' || status === 'WARNING') return 'text-amber-400 font-bold';
+    return 'text-rose-400 font-bold';
+  }
+
+  function riskColorClass(risk: string): string {
+    if (risk === 'LOW') return 'text-emerald-400 font-bold';
+    if (risk === 'MODERATE') return 'text-amber-400 font-bold';
+    return 'text-rose-400 font-bold';
+  }
+
+  // Button click handler — triggers scenario switch
   simBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const simId = btn.getAttribute('data-sim-id') as keyof typeof simulationPresets;
-      const preset = simulationPresets[simId];
-      if (!preset) return;
+      const simId = btn.getAttribute('data-sim-id') as SimulationMode;
+      if (!simId) return;
 
-      // Update button styling states
+      // Update button styling states (preserve existing visual behavior)
       simBtns.forEach(b => {
         b.classList.remove(
           'bg-emerald-950/40', 'border-emerald-500/50', 'text-emerald-200', 'shadow-[0_0_12px_rgba(16,185,129,0.15)]', 'ring-1', 'ring-emerald-400/40',
@@ -107,165 +150,41 @@ const simulationOptions = [
       }
       btn.classList.remove('bg-[#0d1424]', 'border-slate-800', 'text-slate-300');
 
+      // Update mode badge immediately
       if (activeBadge) {
-        activeBadge.textContent = preset.name.toUpperCase();
-        activeBadge.className = preset.healthStatus === 'HEALTHY' 
-          ? 'text-emerald-400 font-bold' 
-          : preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY'
-          ? 'text-amber-400 font-bold'
-          : 'text-rose-400 font-bold';
+        activeBadge.textContent = MODE_LABELS[simId] || simId.toUpperCase();
       }
 
-      // 1. Update Metric Cards
-      const healthVal = document.getElementById('metric-health-val');
-      const healthStatus = document.getElementById('metric-health-status');
-      const healthBar = document.getElementById('metric-health-bar');
-      const rpmVal = document.getElementById('metric-rpm-val');
-      const tempVal = document.getElementById('metric-temp-val');
-      const oilVal = document.getElementById('metric-oil-val');
-      const vibVal = document.getElementById('metric-vib-val');
-      const fuelVal = document.getElementById('metric-fuel-val');
-
-      if (healthVal) healthVal.textContent = String(preset.healthScore);
-      if (healthStatus) {
-        healthStatus.textContent = preset.healthStatus;
-        healthStatus.className = `px-1.5 py-0.2 rounded text-[10px] font-bold ${
-          preset.healthStatus === 'HEALTHY' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
-          preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY' ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' :
-          'bg-rose-950/60 text-rose-400 border border-rose-500/30'
-        }`;
-      }
-      if (healthBar) {
-        healthBar.style.width = `${preset.healthScore}%`;
-      }
-      if (rpmVal) rpmVal.textContent = preset.rpm.toLocaleString();
-      if (tempVal) tempVal.textContent = String(preset.temperature);
-      if (oilVal) oilVal.textContent = String(preset.oilPressure);
-      if (vibVal) vibVal.textContent = String(preset.vibration);
-      if (fuelVal) fuelVal.textContent = String(preset.fuelConsumption);
-
-      // 2. Update Digital Twin Central Viewer
-      const twinStatusText = document.getElementById('twin-status-text');
-      const twinStatusPill = document.getElementById('twin-status-pill');
-      const twinRpm = document.getElementById('twin-rpm-display');
-      const twinTemp = document.getElementById('twin-temp-display');
-      const twinOil = document.getElementById('twin-oil-display');
-      const twinVib = document.getElementById('twin-vib-display');
-
-      if (twinStatusText) twinStatusText.textContent = preset.statusText;
-      if (twinStatusPill) {
-        if (preset.healthStatus === 'HEALTHY') {
-          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-mono-tech font-semibold tracking-wider';
-        } else if (preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY') {
-          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-amber-950/60 border border-amber-500/50 text-amber-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse';
-        } else {
-          twinStatusPill.className = 'flex items-center gap-2 px-3 py-1 rounded-md bg-rose-950/70 border border-rose-500/60 text-rose-300 text-xs font-mono-tech font-semibold tracking-wider animate-pulse';
-        }
-      }
-      if (twinRpm) twinRpm.textContent = preset.rpm.toLocaleString();
-      if (twinTemp) twinTemp.textContent = String(preset.temperature);
-      if (twinOil) twinOil.textContent = String(preset.oilPressure);
-      if (twinVib) twinVib.textContent = String(preset.vibration);
-
-      // 3. Update Health Breakdown Panel & Radial Gauge
-      const radialRing = document.getElementById('radial-health-ring');
-      const panelHealthScore = document.getElementById('panel-health-score');
-      const panelHealthLabel = document.getElementById('panel-health-label');
-      if (radialRing) {
-        radialRing.style.strokeDashoffset = String(251.2 * (1 - preset.healthScore / 100));
-      }
-      if (panelHealthScore) panelHealthScore.textContent = String(preset.healthScore);
-      if (panelHealthLabel) {
-        panelHealthLabel.textContent = `INTEGRITY: ${preset.healthScore}%`;
-        panelHealthLabel.className = `mt-2 text-xs font-bold font-mono-tech ${
-          preset.healthScore >= 90 ? 'text-emerald-400' : preset.healthScore >= 70 ? 'text-amber-400' : 'text-rose-400'
-        }`;
-      }
-
-      // Update component progress bars
-      const compScores = preset.components;
-      const cylScoreEl = document.getElementById('comp-score-cylinder');
-      const cylBarEl = document.getElementById('comp-bar-cylinder');
-      if (cylScoreEl) cylScoreEl.textContent = `${compScores.cylinder}%`;
-      if (cylBarEl) cylBarEl.style.width = `${compScores.cylinder}%`;
-
-      const lubScoreEl = document.getElementById('comp-score-lubrication');
-      const lubBarEl = document.getElementById('comp-bar-lubrication');
-      if (lubScoreEl) lubScoreEl.textContent = `${compScores.lub}%`;
-      if (lubBarEl) lubBarEl.style.width = `${compScores.lub}%`;
-
-      const brgScoreEl = document.getElementById('comp-score-bearing');
-      const brgBarEl = document.getElementById('comp-bar-bearing');
-      if (brgScoreEl) brgScoreEl.textContent = `${compScores.bearing}%`;
-      if (brgBarEl) brgBarEl.style.width = `${compScores.bearing}%`;
-
-      const coolScoreEl = document.getElementById('comp-score-cooling');
-      const coolBarEl = document.getElementById('comp-bar-cooling');
-      if (coolScoreEl) coolScoreEl.textContent = `${compScores.cooling}%`;
-      if (coolBarEl) coolBarEl.style.width = `${compScores.cooling}%`;
-
-      const fuelScoreEl = document.getElementById('comp-score-fuel');
-      const fuelBarEl = document.getElementById('comp-bar-fuel');
-      if (fuelScoreEl) fuelScoreEl.textContent = `${compScores.fuel}%`;
-      if (fuelBarEl) fuelBarEl.style.width = `${compScores.fuel}%`;
-
-      // 4. Update Faults Panel
-      const faultsStatusText = document.getElementById('faults-status-text');
-      const faultsCount = document.getElementById('faults-count-pill');
-      const faultsBadge = document.getElementById('faults-severity-badge');
-      const eventsList = document.getElementById('events-list');
-
-      if (faultsStatusText) {
-        faultsStatusText.textContent = preset.faultText;
-        faultsStatusText.className = `text-sm font-bold font-mono-tech flex items-center gap-2 ${
-          preset.activeFaults === 0 ? 'text-emerald-400' : preset.activeFaults === 1 ? 'text-amber-400' : 'text-rose-400'
-        }`;
-      }
-      if (faultsCount) faultsCount.textContent = String(preset.activeFaults);
-      if (faultsBadge) {
-        faultsBadge.textContent = `STATUS: ${preset.healthStatus}`;
-        faultsBadge.className = `px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold ${
-          preset.healthStatus === 'HEALTHY' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30' :
-          preset.healthStatus === 'WARNING' || preset.healthStatus === 'ADVISORY' ? 'bg-amber-950/60 text-amber-300 border border-amber-500/30' :
-          'bg-rose-950/60 text-rose-300 border border-rose-500/30'
-        }`;
-      }
-
-      // Prepend simulated new alert to events list
-      if (eventsList && preset.newAlert) {
-        const item = document.createElement('div');
-        item.className = 'event-item flex items-center justify-between p-2 rounded bg-slate-950/60 border border-slate-800/60 text-xs font-mono-tech hover:border-slate-700 transition-colors animate-pulse';
-        item.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${
-              preset.newAlert.severity === 'NORMAL' ? 'bg-emerald-400' :
-              preset.newAlert.severity === 'WARNING' ? 'bg-amber-400' : 'bg-rose-500'
-            }"></span>
-            <span class="text-slate-200 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
-              ${preset.newAlert.description}
-            </span>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
-              ${preset.newAlert.subsystem}
-            </span>
-            <span class="text-[10px] text-cyan-400 font-mono-tech">
-              ${preset.newAlert.time}
-            </span>
-          </div>
-        `;
-        eventsList.prepend(item);
-      }
-
-      // 5. Update Charts display values
-      const chartRpm = document.getElementById('chart-rpm-val');
-      const chartTemp = document.getElementById('chart-temp-val');
-      const chartVib = document.getElementById('chart-vib-val');
-      const chartOil = document.getElementById('chart-oil-val');
-      if (chartRpm) chartRpm.textContent = `${preset.rpm.toLocaleString()} RPM`;
-      if (chartTemp) chartTemp.textContent = `${preset.temperature} °C`;
-      if (chartVib) chartVib.textContent = `${preset.vibration} mm/s`;
-      if (chartOil) chartOil.textContent = `${preset.oilPressure} bar`;
+      // Trigger the simulator — this starts the gradual transition
+      simulator.setScenario(simId);
     });
   });
+
+  // Listen for engine state updates and update fault panel info
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const state = e.detail;
+
+    // Update mode badge color
+    if (activeBadge) {
+      activeBadge.className = statusColorClass(state.engineStatus);
+    }
+
+    // Update info row
+    if (simInfoMode) {
+      simInfoMode.textContent = MODE_LABELS[state.simulationMode] || state.simulationMode.toUpperCase();
+      simInfoMode.className = statusColorClass(state.engineStatus);
+    }
+    if (simInfoFault) {
+      simInfoFault.textContent = state.activeFault;
+      simInfoFault.className = state.activeFault === 'None' ? 'text-slate-300 font-bold' : 'text-rose-400 font-bold';
+    }
+    if (simInfoRisk) {
+      simInfoRisk.textContent = state.faultRisk;
+      simInfoRisk.className = riskColorClass(state.faultRisk);
+    }
+    if (simInfoStatus) {
+      simInfoStatus.textContent = state.engineStatus;
+      simInfoStatus.className = statusColorClass(state.engineStatus);
+    }
+  }) as EventListener);
 </script>

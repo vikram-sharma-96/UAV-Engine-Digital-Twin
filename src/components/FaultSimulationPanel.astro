@@ -71,14 +71,18 @@ const simulationOptions = [
   </div>
 
   <!-- Live Simulation Status Row -->
-  <div class="pt-2 border-t border-slate-800/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono-tech">
+  <div class="pt-2 border-t border-slate-800/60 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] font-mono-tech">
     <div class="flex items-center gap-1.5">
-      <span class="text-slate-400">MODE:</span>
+      <span class="text-slate-400">INPUT:</span>
       <span id="sim-info-mode" class="text-emerald-400 font-bold">NORMAL</span>
     </div>
     <div class="flex items-center gap-1.5">
-      <span class="text-slate-400">FAULT:</span>
+      <span class="text-slate-400">ML FAULT:</span>
       <span id="sim-info-fault" class="text-slate-300 font-bold">None</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-400">CONFIDENCE:</span>
+      <span id="sim-info-conf" class="text-cyan-400 font-bold">--%</span>
     </div>
     <div class="flex items-center gap-1.5">
       <span class="text-slate-400">RISK:</span>
@@ -101,6 +105,7 @@ const simulationOptions = [
   // Fault panel info elements
   const simInfoMode = document.getElementById('sim-info-mode');
   const simInfoFault = document.getElementById('sim-info-fault');
+  const simInfoConf = document.getElementById('sim-info-conf');
   const simInfoRisk = document.getElementById('sim-info-risk');
   const simInfoStatus = document.getElementById('sim-info-status');
 
@@ -178,6 +183,11 @@ const simulationOptions = [
       simInfoFault.textContent = state.activeFault;
       simInfoFault.className = state.activeFault === 'None' ? 'text-slate-300 font-bold' : 'text-rose-400 font-bold';
     }
+    if (simInfoConf) {
+      const confVal = typeof state.mlConfidence === 'number' ? (state.mlConfidence * 100).toFixed(0) : '95';
+      simInfoConf.textContent = state.mlStatus === 'ONLINE' ? `${confVal}%` : 'OFFLINE';
+      simInfoConf.className = state.mlStatus === 'ONLINE' ? 'text-cyan-400 font-bold' : 'text-amber-400 font-bold';
+    }
     if (simInfoRisk) {
       simInfoRisk.textContent = state.faultRisk;
       simInfoRisk.className = riskColorClass(state.faultRisk);
@@ -188,3 +198,4 @@ const simulationOptions = [
     }
   }) as EventListener);
 </script>
+

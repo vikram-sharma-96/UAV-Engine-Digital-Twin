@@ -1,0 +1,29 @@
+{
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 120,
+  "features": [
+    "rpm",
+    "temperature",
+    "oil_pressure",
+    "vibration",
+    "fuel_flow"
+  ],
+  "classes": [
+    "Bearing Degradation",
+    "Low Oil Pressure",
+    "Normal",
+    "Overheating",
+    "Performance Degradation"
+  ],
+  "accuracy": 1.0,
+  "feature_importances": {
+    "rpm": 0.19697352608672425,
+    "temperature": 0.14966085835549028,
+    "oil_pressure": 0.2537116667656412,
+    "vibration": 0.25575272952251366,
+    "fuel_flow": 0.14390121926963056
+  },
+  "trained_at": "2026-09-18T19:06:49.583958+00:00",
+  "training_samples": 8000,
+  "test_samples": 2000
+}

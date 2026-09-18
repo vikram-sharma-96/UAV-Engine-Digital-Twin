@@ -1,0 +1,185 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PredictiveMaintenance from '../../components/PredictiveMaintenance.astro';
+---
+
+<Layout 
+	title="Predictions & Prognostics | UAV Aero Engine Digital Twin" 
+	description="Machine Learning Engine Prognostics, Remaining Useful Life (RUL) & Failure Risk Prediction"
+	activeRoute="/predictions"
+>
+	<!-- Page Header Banner -->
+	<div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0a0f1e]/90 border border-slate-800/90 shadow-sm">
+		<div>
+			<div class="flex items-center gap-2">
+				<span class="text-xs font-mono-tech font-bold text-violet-400 uppercase tracking-wider">
+					PREDICTIVE MAINTENANCE & PROGNOSTICS
+				</span>
+				<span class="text-slate-600">|</span>
+				<span class="text-xs font-mono-tech text-slate-400">
+					ENSEMBLE LSTM NEURAL MODEL
+				</span>
+			</div>
+			<h2 class="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+				Remaining Useful Life (RUL) & Health Degradation Trajectory Forecasting
+			</h2>
+		</div>
+
+		<div class="flex items-center gap-2 text-xs font-mono-tech">
+			<div class="px-2.5 py-1 rounded bg-violet-950/60 border border-violet-500/30 text-violet-300 font-semibold flex items-center gap-1.5">
+				<span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+				MODEL: LSTM-FDIR v2.4 [INFERENCE 8ms]
+			</div>
+		</div>
+	</div>
+
+	<!-- 1. Predictive Overview Summary Cards (Next Inspection, Bearing, Cooling, Maintenance Risk, RUL) -->
+	<PredictiveMaintenance />
+
+	<!-- 2. Two-Column Forecasting & Prognostic History Grid -->
+	<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+		
+		<!-- Left: Degradation Forecast Curve with 95% Confidence Intervals (7 cols) -->
+		<div class="lg:col-span-7 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+			<div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+				<div class="flex items-center gap-2">
+					<div class="p-1 rounded bg-violet-950/60 border border-violet-500/30 text-violet-400">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+						</svg>
+					</div>
+					<div>
+						<h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+							RUL DEGRADATION TRAJECTORY (PROJECTED 100 HRS)
+						</h3>
+						<p class="text-[10px] text-slate-400 font-mono-tech">
+							LSTM MONTE-CARLO ENSEMBLE WITH 95% CONFIDENCE INTERVALS
+						</p>
+					</div>
+				</div>
+				<span class="text-[10px] font-mono-tech text-violet-300 bg-violet-950/40 px-2 py-0.5 rounded border border-violet-500/30">
+					PROJECTION OK
+				</span>
+			</div>
+
+			<!-- Forecast SVG Visualizer -->
+			<div class="relative w-full h-[160px] my-3">
+				<svg class="w-full h-full" viewBox="0 0 500 160" preserveAspectRatio="none">
+					<defs>
+						<!-- Confidence interval fill -->
+						<linearGradient id="ciGrad" x1="0%" y1="0%" x2="0%" y2="1">
+							<stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25"/>
+							<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"/>
+						</linearGradient>
+					</defs>
+
+					<!-- Overhaul Limit threshold line at 60% -->
+					<line x1="0" y1="110" x2="500" y2="110" stroke="#f43f5e" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+					<text x="410" y="105" fill="#f43f5e" font-family="monospace" font-size="9" opacity="0.8">OVERHAUL LIMIT</text>
+
+					<!-- Scheduled Maintenance threshold line at 80% -->
+					<line x1="0" y1="70" x2="500" y2="70" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+					<text x="400" y="65" fill="#f59e0b" font-family="monospace" font-size="9" opacity="0.8">INSPECTION LEVEL</text>
+
+					<!-- Confidence Interval Boundary (Cone of uncertainty expanding to future) -->
+					<path d="M 180,25 C 260,30 350,45 500,85 L 500,125 C 350,75 260,45 180,25 Z" fill="url(#ciGrad)" />
+					<path d="M 180,25 C 260,30 350,45 500,85" fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2 2" opacity="0.7"/>
+					<path d="M 180,25 C 260,45 350,75 500,125" fill="none" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2 2" opacity="0.7"/>
+
+					<!-- Historical Actual Path (Solid Emerald Line) -->
+					<path d="M 0,15 Q 90,18 180,25" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+
+					<!-- Current Time Transition Marker -->
+					<line x1="180" y1="5" x2="180" y2="155" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="2 2" />
+					<text x="185" y="18" fill="#38bdf8" font-family="monospace" font-size="9" font-weight="bold">NOW (142.8h)</text>
+
+					<!-- Projected Mean Trajectory (Dashed Violet Line) -->
+					<path d="M 180,25 C 260,38 350,60 500,105" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-dasharray="5 3" />
+					<circle cx="180" cy="25" r="4.5" fill="#38bdf8" />
+				</svg>
+			</div>
+
+			<div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+				<div class="flex items-center gap-3">
+					<span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-emerald-400"></span> HISTORICAL</span>
+					<span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-violet-400"></span> LSTM FORECAST</span>
+					<span class="flex items-center gap-1"><span class="w-2 h-2 bg-violet-500/30 border border-violet-400/40"></span> 95% CONFIDENCE CONE</span>
+				</div>
+				<span class="text-violet-300">EST. OVERHAUL: 462.8 HRS</span>
+			</div>
+		</div>
+
+		<!-- Right: Component Specific Prognostics & Prediction History (5 cols) -->
+		<div class="lg:col-span-5 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+			<div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+				<div class="flex items-center gap-2">
+					<div class="p-1 rounded bg-violet-950/60 border border-violet-500/30 text-violet-400">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"></circle>
+							<polyline points="12 6 12 12 14 14"></polyline>
+						</svg>
+					</div>
+					<div>
+						<h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+							COMPONENT RUL BREAKDOWN
+						</h3>
+						<p class="text-[10px] text-slate-400 font-mono-tech">
+							TIME TO CRITICAL THRESHOLD BY SUBSYSTEM
+						</p>
+					</div>
+				</div>
+				<span class="text-[10px] font-mono-tech text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+					MTTF MATRIX
+				</span>
+			</div>
+
+			<div class="space-y-2.5 my-3 font-mono-tech text-xs">
+				<div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800">
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300 font-semibold">Crankshaft Main Bearings</span>
+						<span class="text-emerald-400 font-bold">357.2 HRS RUL</span>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+						<div class="bg-emerald-400 h-full rounded-full" style="width: 71%"></div>
+					</div>
+				</div>
+
+				<div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800">
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300 font-semibold">Cylinder Liners & Rings</span>
+						<span class="text-cyan-400 font-bold">428.0 HRS RUL</span>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+						<div class="bg-cyan-400 h-full rounded-full" style="width: 85%"></div>
+					</div>
+				</div>
+
+				<div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800">
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300 font-semibold">Cooling System Fin Efficiency</span>
+						<span class="text-indigo-400 font-bold">480.0 HRS RUL</span>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+						<div class="bg-indigo-400 h-full rounded-full" style="width: 96%"></div>
+					</div>
+				</div>
+
+				<div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800">
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300 font-semibold">High-Pressure Fuel Injectors</span>
+						<span class="text-violet-400 font-bold">294.0 HRS RUL</span>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+						<div class="bg-violet-400 h-full rounded-full" style="width: 58%"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+				<span>UNSCHEDULED DOWNTIME PROBABILITY</span>
+				<span class="text-emerald-400 font-bold">&lt; 0.38%</span>
+			</div>
+		</div>
+
+	</div>
+</Layout>

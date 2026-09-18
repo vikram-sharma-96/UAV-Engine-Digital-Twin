@@ -1,0 +1,133 @@
+---
+// MiniDigitalTwinPreview.astro - Compact preview of the Digital Twin for Overview
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/30 p-4 shadow-sm flex flex-col justify-between h-full group hover:border-cyan-500/50 transition-all">
+  <!-- Top Bar -->
+  <div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-cyan-950/70 border border-cyan-500/40 text-cyan-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          DIGITAL TWIN PREVIEW
+        </h3>
+        <p class="text-[10px] text-slate-400 font-mono-tech">
+          CAD ISOMETRIC 4-CYL BOXER REPLICA
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="mini-twin-status" class="px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        HEALTHY
+      </span>
+    </div>
+  </div>
+
+  <!-- Central Mini Visual Representation -->
+  <div class="relative w-full h-[180px] my-3 rounded-lg bg-gradient-to-b from-[#080d1a] to-[#04070e] border border-slate-800/80 overflow-hidden flex items-center justify-center">
+    <!-- Grid BG -->
+    <div class="absolute inset-0 tech-grid-bg opacity-30 pointer-events-none"></div>
+    
+    <!-- Mini SVG Isometric Schematic Preview -->
+    <svg class="w-4/5 h-4/5 max-h-[150px] drop-shadow-[0_0_15px_rgba(6,182,212,0.2)]" viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="miniCrankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1e293b"/>
+          <stop offset="100%" stop-color="#090d16"/>
+        </linearGradient>
+        <radialGradient id="miniCombustion" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Center Crankcase -->
+      <rect x="150" y="70" width="100" height="100" rx="12" fill="url(#miniCrankGrad)" stroke="#06b6d4" stroke-width="1.5"/>
+      <circle cx="200" cy="120" r="32" fill="#0b1120" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3 3"/>
+      
+      <!-- Rotating Crankshaft Animation -->
+      <g class="mini-crank-rot origin-[200px_120px]">
+        <circle cx="200" cy="120" r="14" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+        <line x1="200" y1="120" x2="200" y2="100" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="200" cy="100" r="4" fill="#38bdf8"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 200 120" to="360 200 120" dur="1.2s" repeatCount="indefinite" />
+      </g>
+
+      <!-- Left Cylinder Bank (Cyl 1 & 3) -->
+      <rect x="50" y="85" width="90" height="70" rx="6" fill="#0e172a" stroke="#0ea5e9" stroke-width="1.5"/>
+      <line x1="70" y1="95" x2="70" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <line x1="90" y1="95" x2="90" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <line x1="110" y1="95" x2="110" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="95" cy="120" r="16" fill="url(#miniCombustion)" class="animate-pulse"/>
+      <text x="75" y="105" fill="#64748b" font-family="monospace" font-size="9">CYL 1/3</text>
+
+      <!-- Right Cylinder Bank (Cyl 2 & 4) -->
+      <rect x="260" y="85" width="90" height="70" rx="6" fill="#0e172a" stroke="#0ea5e9" stroke-width="1.5"/>
+      <line x1="280" y1="95" x2="280" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <line x1="300" y1="95" x2="300" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <line x1="320" y1="95" x2="320" y2="145" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="305" cy="120" r="16" fill="url(#miniCombustion)" class="animate-pulse"/>
+      <text x="285" y="105" fill="#64748b" font-family="monospace" font-size="9">CYL 2/4</text>
+
+      <!-- Propeller Hub Axis -->
+      <path d="M 200 40 L 200 70" stroke="#06b6d4" stroke-width="2" stroke-dasharray="2 2"/>
+      <polygon points="194,40 206,40 200,28" fill="#06b6d4"/>
+    </svg>
+
+    <!-- Mini Live HUD Tags -->
+    <div class="absolute bottom-2 left-3 text-[10px] font-mono-tech text-slate-400">
+      <span class="text-slate-500">PROP SPEED:</span> <span id="mini-twin-rpm" class="text-cyan-400 font-bold">5,200 RPM</span>
+    </div>
+    <div class="absolute bottom-2 right-3 text-[10px] font-mono-tech text-slate-400 text-right">
+      <span class="text-slate-500">CHT:</span> <span id="mini-twin-temp" class="text-slate-200 font-bold">78 °C</span>
+    </div>
+  </div>
+
+  <!-- Bottom Action Link to Full Digital Twin Page -->
+  <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+    <span class="text-[10px] font-mono-tech text-slate-400">
+      HIGH-RES CAD 3D SCHEMATIC
+    </span>
+    <a 
+      href="/digital-twin" 
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 text-xs font-mono-tech font-semibold hover:bg-cyan-900 hover:text-white transition-all group-hover:shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+    >
+      <span>LAUNCH DIGITAL TWIN</span>
+      <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  const miniStatus = document.getElementById('mini-twin-status');
+  const miniRpm = document.getElementById('mini-twin-rpm');
+  const miniTemp = document.getElementById('mini-twin-temp');
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+    if (miniRpm) miniRpm.textContent = `${s.rpm.toLocaleString()} RPM`;
+    if (miniTemp) miniTemp.textContent = `${s.temperature} °C`;
+    if (miniStatus) {
+      miniStatus.textContent = s.engineStatus;
+      if (s.engineStatus === 'HEALTHY') {
+        miniStatus.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5';
+      } else if (s.engineStatus === 'ADVISORY' || s.engineStatus === 'WARNING') {
+        miniStatus.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 flex items-center gap-1.5';
+      } else {
+        miniStatus.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-rose-950/60 text-rose-300 border border-rose-500/30 flex items-center gap-1.5';
+      }
+    }
+  }) as EventListener);
+</script>

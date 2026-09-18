@@ -1,0 +1,261 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TelemetryCharts from '../../components/TelemetryCharts.astro';
+import MetricCards from '../../components/MetricCards.astro';
+import RealTimeStatusPanel from '../../components/RealTimeStatusPanel.astro';
+---
+
+<Layout 
+	title="Sensor Telemetry Data | UAV Aero Engine Digital Twin" 
+	description="High-Speed Real-Time CAN Bus Sensor Telemetry, Historical Charts & Channel Matrix"
+	activeRoute="/sensor-data"
+>
+	<!-- Page Header Banner -->
+	<div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0a0f1e]/90 border border-slate-800/90 shadow-sm">
+		<div>
+			<div class="flex items-center gap-2">
+				<span class="text-xs font-mono-tech font-bold text-teal-400 uppercase tracking-wider">
+					HIGH-SPEED SENSOR TELEMETRY CONSOLE
+				</span>
+				<span class="text-slate-600">|</span>
+				<span class="text-xs font-mono-tech text-slate-400">
+					CAN 2.0B / 1000 kBaud REAL-TIME BUS
+				</span>
+			</div>
+			<h2 class="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+				Multi-Channel Synchronized Sensor Streams, Real-Time FIFO Buffers & Waveforms
+			</h2>
+		</div>
+
+		<div class="flex items-center gap-2 text-xs font-mono-tech">
+			<div class="px-2.5 py-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-300 font-semibold flex items-center gap-1.5">
+				<span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+				RATE: 1,000 Hz REAL-TIME
+			</div>
+		</div>
+	</div>
+
+	<!-- 1. Live Instantaneous Sensor Value Strip -->
+	<MetricCards />
+
+	<!-- 2. Detailed Live Synchronized Trend Charts (RPM, Temp, Vib, Oil) -->
+	<TelemetryCharts />
+
+	<!-- 3. Telemetry Bus Stream Status Panel & Complete Channels Table -->
+	<div class="space-y-5">
+		<RealTimeStatusPanel />
+
+		<!-- Comprehensive Sensor Channels Table -->
+		<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm">
+			<div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+				<div class="flex items-center gap-2">
+					<div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+							<line x1="3" y1="9" x2="21" y2="9"></line>
+							<line x1="9" y1="21" x2="9" y2="9"></line>
+						</svg>
+					</div>
+					<div>
+						<h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+							ALL-CHANNEL SENSOR TELEMETRY MATRIX
+						</h3>
+						<p class="text-[10px] text-slate-400 font-mono-tech">
+							CALIBRATED ENGINEERING UNITS & THRESHOLD TOLERANCES
+						</p>
+					</div>
+				</div>
+
+				<span class="text-[10px] font-mono-tech text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+					CAN BUS ID: 0x1F2A - 0x1F30
+				</span>
+			</div>
+
+			<!-- Responsive Sensor Table -->
+			<div class="overflow-x-auto my-3">
+				<table class="w-full text-left font-mono-tech text-xs">
+					<thead>
+						<tr class="border-b border-slate-800 text-[10px] text-slate-400 uppercase">
+							<th class="py-2 px-3">CAN Channel</th>
+							<th class="py-2 px-3">Sensor Parameter</th>
+							<th class="py-2 px-3">Live Value</th>
+							<th class="py-2 px-3">Nominal Range</th>
+							<th class="py-2 px-3">Warning Limit</th>
+							<th class="py-2 px-3 text-right">Status</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-800/60 text-slate-300">
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x101</td>
+							<td class="py-2.5 px-3">Engine Crankshaft Tachometer (RPM)</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-rpm">5,200 RPM</td>
+							<td class="py-2.5 px-3 text-slate-400">4,800 - 5,400 RPM</td>
+							<td class="py-2.5 px-3 text-slate-400">&gt; 6,000 RPM</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-rpm" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x102</td>
+							<td class="py-2.5 px-3">Cylinder Head Temperature Cyl 1 (CHT-1)</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-cht1">78.0 °C</td>
+							<td class="py-2.5 px-3 text-slate-400">70.0 - 85.0 °C</td>
+							<td class="py-2.5 px-3 text-slate-400">&gt; 95.0 °C</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-cht1" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x103</td>
+							<td class="py-2.5 px-3">Cylinder Head Temperature Cyl 2 (CHT-2)</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-cht2">77.4 °C</td>
+							<td class="py-2.5 px-3 text-slate-400">70.0 - 85.0 °C</td>
+							<td class="py-2.5 px-3 text-slate-400">&gt; 95.0 °C</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-cht2" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x104</td>
+							<td class="py-2.5 px-3">Crankcase Lubrication Pressure</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-oil">4.30 bar</td>
+							<td class="py-2.5 px-3 text-slate-400">3.80 - 4.80 bar</td>
+							<td class="py-2.5 px-3 text-slate-400">&lt; 2.50 bar</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-oil" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x105</td>
+							<td class="py-2.5 px-3">3-Axis Piezoelectric Vibration (RMS)</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-vib">1.20 mm/s</td>
+							<td class="py-2.5 px-3 text-slate-400">0.80 - 1.60 mm/s</td>
+							<td class="py-2.5 px-3 text-slate-400">&gt; 3.50 mm/s</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-vib" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+
+						<tr class="hover:bg-slate-900/50">
+							<td class="py-2.5 px-3 text-cyan-400 font-bold">CAN-0x106</td>
+							<td class="py-2.5 px-3">Turbine Fuel Flow Meter</td>
+							<td class="py-2.5 px-3 font-bold text-slate-100" id="tbl-val-fuel">2.70 L/h</td>
+							<td class="py-2.5 px-3 text-slate-400">2.20 - 3.20 L/h</td>
+							<td class="py-2.5 px-3 text-slate-400">&gt; 4.50 L/h</td>
+							<td class="py-2.5 px-3 text-right">
+								<span id="tbl-status-fuel" class="text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+									NOMINAL
+								</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+				<span>ERROR DETECTION: 16-BIT CRC VALIDATED</span>
+				<span class="text-cyan-400">SAMPLE BUFFER: 600 SAMPLES IN MEMORY</span>
+			</div>
+		</div>
+	</div>
+</Layout>
+
+<script>
+	import type { EngineState } from '../../data/engineSimulator';
+
+	const tblValRpm = document.getElementById('tbl-val-rpm');
+	const tblStatusRpm = document.getElementById('tbl-status-rpm');
+	const tblValCht1 = document.getElementById('tbl-val-cht1');
+	const tblStatusCht1 = document.getElementById('tbl-status-cht1');
+	const tblValCht2 = document.getElementById('tbl-val-cht2');
+	const tblStatusCht2 = document.getElementById('tbl-status-cht2');
+	const tblValOil = document.getElementById('tbl-val-oil');
+	const tblStatusOil = document.getElementById('tbl-status-oil');
+	const tblValVib = document.getElementById('tbl-val-vib');
+	const tblStatusVib = document.getElementById('tbl-status-vib');
+	const tblValFuel = document.getElementById('tbl-val-fuel');
+	const tblStatusFuel = document.getElementById('tbl-status-fuel');
+
+	document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+		const s = e.detail;
+
+		// RPM
+		if (tblValRpm) tblValRpm.textContent = `${s.rpm.toLocaleString()} RPM`;
+		if (tblStatusRpm) {
+			if (s.rpm > 6000 || s.rpm < 3500) {
+				tblStatusRpm.textContent = 'ABNORMAL';
+				tblStatusRpm.className = 'text-[9px] px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30 font-bold';
+			} else {
+				tblStatusRpm.textContent = 'NOMINAL';
+				tblStatusRpm.className = 'text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+			}
+		}
+
+		// Temp CHT 1 & 2
+		if (tblValCht1) tblValCht1.textContent = `${s.temperature} °C`;
+		if (tblValCht2) tblValCht2.textContent = `${(s.temperature - 0.6).toFixed(1)} °C`;
+		if (tblStatusCht1) {
+			if (s.temperature > 95) {
+				tblStatusCht1.textContent = 'CRITICAL HOT';
+				tblStatusCht1.className = 'text-[9px] px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30 font-bold';
+			} else if (s.temperature > 85) {
+				tblStatusCht1.textContent = 'ELEVATED';
+				tblStatusCht1.className = 'text-[9px] px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30 font-bold';
+			} else {
+				tblStatusCht1.textContent = 'NOMINAL';
+				tblStatusCht1.className = 'text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+			}
+		}
+		if (tblStatusCht2 && tblStatusCht1) {
+			tblStatusCht2.textContent = tblStatusCht1.textContent;
+			tblStatusCht2.className = tblStatusCht1.className;
+		}
+
+		// Oil Pressure
+		if (tblValOil) tblValOil.textContent = `${s.oilPressure} bar`;
+		if (tblStatusOil) {
+			if (s.oilPressure < 2.5) {
+				tblStatusOil.textContent = 'LOW PRESSURE';
+				tblStatusOil.className = 'text-[9px] px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30 font-bold';
+			} else if (s.oilPressure < 3.5) {
+				tblStatusOil.textContent = 'CAUTION';
+				tblStatusOil.className = 'text-[9px] px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30 font-bold';
+			} else {
+				tblStatusOil.textContent = 'NOMINAL';
+				tblStatusOil.className = 'text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+			}
+		}
+
+		// Vibration
+		if (tblValVib) tblValVib.textContent = `${s.vibration} mm/s`;
+		if (tblStatusVib) {
+			if (s.vibration > 3.5) {
+				tblStatusVib.textContent = 'HIGH RMS';
+				tblStatusVib.className = 'text-[9px] px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30 font-bold';
+			} else if (s.vibration > 2.0) {
+				tblStatusVib.textContent = 'ELEVATED';
+				tblStatusVib.className = 'text-[9px] px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30 font-bold';
+			} else {
+				tblStatusVib.textContent = 'NOMINAL';
+				tblStatusVib.className = 'text-[9px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+			}
+		}
+
+		// Fuel Flow
+		if (tblValFuel) tblValFuel.textContent = `${s.fuelFlow} L/h`;
+	}) as EventListener);
+</script>

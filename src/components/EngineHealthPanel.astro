@@ -115,3 +115,90 @@ const { components, metrics } = initialEngineData;
     <span class="text-cyan-400">KALMAN PREDICTIVE DRIFT: 0.04% / HR</span>
   </div>
 </div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  const healthScoreEl = document.getElementById('panel-health-score');
+  const healthLabelEl = document.getElementById('panel-health-label');
+  const radialRingEl = document.getElementById('radial-health-ring');
+
+  const compCylScore = document.getElementById('comp-score-cylinder');
+  const compCylBar = document.getElementById('comp-bar-cylinder');
+  const compCylStatus = document.getElementById('comp-status-cylinder');
+
+  const compLubScore = document.getElementById('comp-score-lubrication');
+  const compLubBar = document.getElementById('comp-bar-lubrication');
+  const compLubStatus = document.getElementById('comp-status-lubrication');
+
+  const compBrgScore = document.getElementById('comp-score-bearing');
+  const compBrgBar = document.getElementById('comp-bar-bearing');
+  const compBrgStatus = document.getElementById('comp-status-bearing');
+
+  const compCoolScore = document.getElementById('comp-score-cooling');
+  const compCoolBar = document.getElementById('comp-bar-cooling');
+  const compCoolStatus = document.getElementById('comp-status-cooling');
+
+  const compFuelScore = document.getElementById('comp-score-fuel');
+  const compFuelBar = document.getElementById('comp-bar-fuel');
+  const compFuelStatus = document.getElementById('comp-status-fuel');
+
+  function updateSubsystem(scoreEl: HTMLElement | null, barEl: HTMLElement | null, statusEl: HTMLElement | null, score: number) {
+    if (scoreEl) scoreEl.textContent = `${score}%`;
+    if (barEl) {
+      barEl.style.width = `${score}%`;
+      if (score < 60) {
+        barEl.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+      } else if (score < 80) {
+        barEl.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+      } else {
+        barEl.className = 'bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500';
+      }
+    }
+    if (statusEl) {
+      if (score >= 85) {
+        statusEl.textContent = 'NOMINAL';
+        statusEl.className = 'text-[9px] px-1 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/20';
+      } else if (score >= 65) {
+        statusEl.textContent = 'DEGRADED';
+        statusEl.className = 'text-[9px] px-1 rounded bg-amber-950/40 text-amber-400 border border-amber-500/20';
+      } else {
+        statusEl.textContent = 'CRITICAL';
+        statusEl.className = 'text-[9px] px-1 rounded bg-rose-950/40 text-rose-400 border border-rose-500/20';
+      }
+    }
+  }
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    // Health Score
+    if (healthScoreEl) healthScoreEl.textContent = String(s.healthScore);
+    if (healthLabelEl) {
+      healthLabelEl.textContent = `INTEGRITY: ${s.healthScore}%`;
+      if (s.healthScore >= 85) {
+        healthLabelEl.className = 'mt-2 text-xs font-bold font-mono-tech text-emerald-400';
+      } else if (s.healthScore >= 65) {
+        healthLabelEl.className = 'mt-2 text-xs font-bold font-mono-tech text-amber-400';
+      } else {
+        healthLabelEl.className = 'mt-2 text-xs font-bold font-mono-tech text-rose-400';
+      }
+    }
+
+    // Radial Gauge
+    if (radialRingEl) {
+      const offset = 251.2 * (1 - s.healthScore / 100);
+      radialRingEl.style.strokeDashoffset = String(offset);
+    }
+
+    // Component Scores
+    if (s.components) {
+      updateSubsystem(compCylScore, compCylBar, compCylStatus, s.components.cylinder);
+      updateSubsystem(compLubScore, compLubBar, compLubStatus, s.components.lubrication);
+      updateSubsystem(compBrgScore, compBrgBar, compBrgStatus, s.components.bearing);
+      updateSubsystem(compCoolScore, compCoolBar, compCoolStatus, s.components.cooling);
+      updateSubsystem(compFuelScore, compFuelBar, compFuelStatus, s.components.fuel);
+    }
+  }) as EventListener);
+</script>
+

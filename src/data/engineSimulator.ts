@@ -17,6 +17,7 @@ export type SimulationMode = 'normal' | 'overheating' | 'bearing' | 'oilPressure
 
 export type EngineStatus = 'HEALTHY' | 'ADVISORY' | 'WARNING' | 'CRITICAL';
 export type FaultRisk = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+export type MLModelStatus = 'ONLINE' | 'OFFLINE';
 
 export interface EngineState {
   rpm: number;
@@ -32,6 +33,10 @@ export interface EngineState {
   tickCount: number;
   components: ComponentScores;
   predictive: PredictiveState;
+  mlFault: string;
+  mlConfidence: number;
+  mlProbabilities: Record<string, number>;
+  mlStatus: MLModelStatus;
 }
 
 export interface ComponentScores {
@@ -95,10 +100,10 @@ const SCENARIO_TARGETS: Record<SimulationMode, ScenarioProfile> = {
   overheating: {
     rpm: 5280,
     temperature: 105,
-    oilPressure: 3.6,
+    oilPressure: 3.5,
     vibration: 1.8,
     fuelFlow: 3.4,
-    activeFault: 'Engine Overheating',
+    activeFault: 'Overheating',
     faultLabel: 'Simulate Overheating',
   },
   bearing: {
@@ -113,19 +118,19 @@ const SCENARIO_TARGETS: Record<SimulationMode, ScenarioProfile> = {
   oilPressure: {
     rpm: 4850,
     temperature: 92,
-    oilPressure: 2.4,
+    oilPressure: 2.3,
     vibration: 2.4,
     fuelFlow: 2.9,
     activeFault: 'Low Oil Pressure',
     faultLabel: 'Simulate Low Oil Pressure',
   },
   degradation: {
-    rpm: 4680,
+    rpm: 4620,
     temperature: 84,
     oilPressure: 3.9,
     vibration: 2.1,
-    fuelFlow: 3.6,
-    activeFault: 'Engine Performance Degradation',
+    fuelFlow: 3.65,
+    activeFault: 'Performance Degradation',
     faultLabel: 'Simulate Performance Degradation',
   },
 };
@@ -158,13 +163,6 @@ function currentTimeStr(): string {
 
 // ─── Health Score Computation ────────────────────────────────────────────────
 
-/**
- * Compute a dynamic health score based on deviation from normal baseline.
- * NOT hard-coded — calculated from live sensor values.
- * 
- * Weights: RPM (15%), Temperature (25%), Oil Pressure (25%), 
- *          Vibration (20%), Fuel Flow (15%)
- */
 function computeHealthScore(state: { rpm: number; temperature: number; oilPressure: number; vibration: number; fuelFlow: number }): number {
   const rpmRange = 600;
   const tempRange = 30;
@@ -279,8 +277,11 @@ function derivePredictiveState(state: { vibration: number; temperature: number }
 
 const MAX_HISTORY = 30;
 const LERP_ALPHA = 0.18;
+const API_PREDICT_URL = 'http://127.0.0.1:8000/api/predict';
 
 type StateCallback = (state: EngineState) => void;
+
+const SESSION_KEY = 'uav_engine_sim_mode';
 
 class EngineSimulator {
   private currentMode: SimulationMode = 'normal';
@@ -294,9 +295,30 @@ class EngineSimulator {
   private vibration = NORMAL_BASELINE.vibration;
   private fuelFlow = NORMAL_BASELINE.fuelFlow;
 
+  // ML State Attributes (populated from real FastAPI prediction)
+  private mlFault: string = 'Normal';
+  private mlConfidence: number = 0.96;
+  private mlProbabilities: Record<string, number> = {
+    'Normal': 0.96,
+    'Overheating': 0.01,
+    'Bearing Degradation': 0.01,
+    'Low Oil Pressure': 0.01,
+    'Performance Degradation': 0.01,
+  };
+  private mlStatus: MLModelStatus = 'OFFLINE';
+  private isFetchingML = false;
+
   private history: HistoryPoint[] = [];
 
   constructor() {
+    // Check if session stored a previously active mode
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const savedMode = window.sessionStorage.getItem(SESSION_KEY) as SimulationMode | null;
+      if (savedMode && SCENARIO_TARGETS[savedMode]) {
+        this.currentMode = savedMode;
+      }
+    }
+
     // Seed initial history with slight variation
     for (let i = 0; i < 11; i++) {
       this.history.push({
@@ -307,6 +329,22 @@ class EngineSimulator {
         oilPressure: parseFloat((4.3 + gaussianNoise(0.03)).toFixed(1)),
       });
     }
+
+    // Auto-start in browser environment
+    if (typeof window !== 'undefined') {
+      this.start();
+    }
+  }
+
+  /** Start simulation timer loop if not already running */
+  start(): void {
+    if (!this.intervalId) {
+      this.intervalId = setInterval(() => {
+        this.tick();
+      }, 1000);
+      // Immediate tick to broadcast state
+      this.tick();
+    }
   }
 
   /** Switch the active simulation scenario */
@@ -314,14 +352,66 @@ class EngineSimulator {
     this.currentMode = mode;
     this.tickCount = 0;
 
-    if (!this.intervalId) {
-      this.intervalId = setInterval(() => {
-        this.tick();
-      }, 1000);
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem(SESSION_KEY, mode);
     }
 
-    // Immediate first tick
-    this.tick();
+    if (!this.intervalId) {
+      this.start();
+    } else {
+      // Immediate tick on switch
+      this.tick();
+    }
+  }
+
+  /** Query FastAPI ML backend with current sensor values */
+  private async queryMLBackend(sensorValues: {
+    rpm: number;
+    temperature: number;
+    oilPressure: number;
+    vibration: number;
+    fuelFlow: number;
+  }): Promise<void> {
+    if (typeof window === 'undefined' || this.isFetchingML) return;
+
+    this.isFetchingML = true;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+      const response = await fetch(API_PREDICT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rpm: sensorValues.rpm,
+          temperature: sensorValues.temperature,
+          oil_pressure: sensorValues.oilPressure,
+          vibration: sensorValues.vibration,
+          fuel_flow: sensorValues.fuelFlow,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        this.mlStatus = 'ONLINE';
+        this.mlFault = data.fault || 'Normal';
+        this.mlConfidence = typeof data.confidence === 'number' ? data.confidence : 0.95;
+        this.mlProbabilities = data.probabilities || {};
+
+        // Dispatch updated state reflecting real ML results
+        this.broadcastState();
+      } else {
+        this.mlStatus = 'OFFLINE';
+      }
+    } catch {
+      // Graceful offline fallback
+      this.mlStatus = 'OFFLINE';
+    } finally {
+      this.isFetchingML = false;
+    }
   }
 
   /** Advance simulation by one step */
@@ -353,6 +443,20 @@ class EngineSimulator {
       this.history.shift();
     }
 
+    // Query real ML model asynchronously with latest sensor values
+    this.queryMLBackend({
+      rpm: this.rpm,
+      temperature: this.temperature,
+      oilPressure: this.oilPressure,
+      vibration: this.vibration,
+      fuelFlow: this.fuelFlow,
+    });
+
+    this.broadcastState();
+  }
+
+  /** Broadcast current state to all subscribers and document listeners */
+  private broadcastState(): void {
     const state = this.getState();
 
     if (typeof document !== 'undefined') {
@@ -375,22 +479,54 @@ class EngineSimulator {
     };
 
     const healthScore = computeHealthScore(sensorValues);
-    const engineStatus = deriveEngineStatus(healthScore);
-    const faultRisk = deriveFaultRisk(healthScore);
     const target = SCENARIO_TARGETS[this.currentMode];
     const components = deriveComponentScores(sensorValues);
     const predictive = derivePredictiveState(sensorValues, healthScore);
+
+    // If ML backend is ONLINE, active fault and engine status are driven by the REAL ML prediction!
+    let activeFault: string;
+    let engineStatus: EngineStatus;
+    let faultRisk: FaultRisk;
+
+    if (this.mlStatus === 'ONLINE') {
+      activeFault = this.mlFault === 'Normal' ? 'None' : this.mlFault;
+      if (this.mlFault === 'Normal') {
+        engineStatus = 'HEALTHY';
+        faultRisk = 'LOW';
+      } else if (this.mlFault === 'Bearing Degradation') {
+        engineStatus = 'CRITICAL';
+        faultRisk = 'CRITICAL';
+      } else if (this.mlFault === 'Overheating') {
+        engineStatus = 'WARNING';
+        faultRisk = 'HIGH';
+      } else if (this.mlFault === 'Low Oil Pressure') {
+        engineStatus = 'WARNING';
+        faultRisk = 'HIGH';
+      } else {
+        engineStatus = 'ADVISORY';
+        faultRisk = 'MODERATE';
+      }
+    } else {
+      // Offline fallback: use rule-based derivation
+      activeFault = target.activeFault;
+      engineStatus = deriveEngineStatus(healthScore);
+      faultRisk = deriveFaultRisk(healthScore);
+    }
 
     return {
       ...sensorValues,
       healthScore,
       engineStatus,
-      activeFault: target.activeFault,
+      activeFault,
       faultRisk,
       simulationMode: this.currentMode,
       tickCount: this.tickCount,
       components,
       predictive,
+      mlFault: this.mlFault,
+      mlConfidence: this.mlConfidence,
+      mlProbabilities: this.mlProbabilities,
+      mlStatus: this.mlStatus,
     };
   }
 
@@ -407,6 +543,7 @@ class EngineSimulator {
   /** Subscribe to state changes */
   subscribe(callback: StateCallback): () => void {
     this.subscribers.add(callback);
+    callback(this.getState());
     return () => {
       this.subscribers.delete(callback);
     };
@@ -432,3 +569,5 @@ class EngineSimulator {
 export const simulator = new EngineSimulator();
 
 export { NORMAL_BASELINE, SCENARIO_TARGETS, computeHealthScore };
+
+

@@ -71,6 +71,30 @@ export interface HistoryPoint {
   oilPressure: number;
 }
 
+export type AIAgentStatus =
+  | 'CONNECTING'
+  | 'ONLINE'
+  | 'ANALYZING'
+  | 'WARNING'
+  | 'FAULT DETECTED'
+  | 'OFFLINE'
+  | 'MODEL UNAVAILABLE';
+
+export interface AIAgentDiagnostic {
+  status: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  fault_detected: boolean;
+  fault_type: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  confidence: number;
+  summary: string;
+  recommended_action: string;
+  affected_parameters: string[];
+  reasoning: string;
+  model: string;
+  timestamp: string;
+  telemetry?: Record<string, any>;
+}
+
 export interface EngineState {
   rpm: number;
   temperature: number;
@@ -90,6 +114,10 @@ export interface EngineState {
   mlConfidence: number;
   mlProbabilities: Record<string, number>;
   mlStatus: MLModelStatus;
+  // Local Ollama AI Agent
+  aiAgentStatus: AIAgentStatus;
+  aiAgentNotice?: string;
+  aiDiagnostic?: AIAgentDiagnostic | null;
   // Extended telemetry channels
   exhaustGasTemp?: number;
   manifoldAirPressure?: number;
@@ -165,6 +193,8 @@ export const SCENARIO_TARGETS: Record<SimulationMode, ScenarioTarget> = {
 };
 
 const API_PREDICT_URL = 'http://localhost:8000/api/predict';
+const API_AI_HEALTH_URL = 'http://localhost:8000/api/ai/health';
+const API_AI_ANALYZE_URL = 'http://localhost:8000/api/ai/analyze';
 const MAX_HISTORY = 30;
 type StateCallback = (state: EngineState) => void;
 
@@ -300,6 +330,16 @@ export class EngineSimulator {
   private mlProbabilities: Record<string, number> = {};
   private mlStatus: MLModelStatus = 'OFFLINE';
   private isFetchingML: boolean = false;
+
+  // Local AI Agent state (from Ollama via FastAPI backend)
+  private aiAgentStatus: AIAgentStatus = 'OFFLINE';
+  private aiAgentNotice: string = 'Local AI ready';
+  private aiDiagnostic: AIAgentDiagnostic | null = null;
+  private isAnalyzingWithAI: boolean = false;
+  private isCheckingAIHealth: boolean = false;
+  private lastAIAnalyzeTick: number = 0;
+  private lastAIHealthTick: number = 0;
+  private aiHasAttemptedHealthCheck: boolean = false;
 
   // Cached latest outputs
   private latestTrueState!: TrueEngineState;
@@ -462,6 +502,124 @@ export class EngineSimulator {
       this.mlStatus = 'OFFLINE';
     } finally {
       this.isFetchingML = false;
+    }
+  }
+
+  /** Health check against local Ollama service via FastAPI backend */
+  public async checkAIHealth(): Promise<void> {
+    if (typeof window === 'undefined' || this.isCheckingAIHealth) return;
+    this.isCheckingAIHealth = true;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+      const resp = await fetch(API_AI_HEALTH_URL, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.status === 'ONLINE') {
+          if (
+            this.aiAgentStatus === 'OFFLINE' ||
+            this.aiAgentStatus === 'MODEL UNAVAILABLE' ||
+            this.aiAgentStatus === 'CONNECTING'
+          ) {
+            this.aiAgentStatus = 'ONLINE';
+          }
+          this.aiAgentNotice = `Local AI ready (${data.model})`;
+        } else if (data.status === 'MODEL_UNAVAILABLE') {
+          this.aiAgentStatus = 'MODEL UNAVAILABLE';
+          this.aiAgentNotice = `Model '${data.model}' not installed`;
+          console.warn(
+            `[Local AI Agent] ${data.message}. Available models: ${data.available_models.join(', ') || 'none'}. Run: ollama pull ${data.model}`
+          );
+        } else {
+          this.aiAgentStatus = 'OFFLINE';
+          this.aiAgentNotice = 'Local AI unavailable — telemetry simulation continues.';
+        }
+      } else {
+        this.aiAgentStatus = 'OFFLINE';
+        this.aiAgentNotice = 'Local AI unavailable — telemetry simulation continues.';
+      }
+    } catch {
+      this.aiAgentStatus = 'OFFLINE';
+      this.aiAgentNotice = 'Local AI unavailable — telemetry simulation continues.';
+    } finally {
+      this.isCheckingAIHealth = false;
+      this.aiHasAttemptedHealthCheck = true;
+      this.broadcastState();
+    }
+  }
+
+  /** Query Local Ollama AI Agent to diagnose engine telemetry */
+  private async queryAIAgent(): Promise<void> {
+    if (typeof window === 'undefined' || this.isAnalyzingWithAI) return;
+    if (this.aiAgentStatus === 'MODEL UNAVAILABLE') return;
+
+    this.isAnalyzingWithAI = true;
+    this.aiAgentStatus = 'ANALYZING';
+    this.broadcastState();
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      const payload = {
+        engineTemp: this.latestMeasured.cht_C,
+        rpm: this.latestMeasured.rpm,
+        oilPressure: this.latestMeasured.oilPressure_bar,
+        vibration: this.latestMeasured.vibration_mm_s,
+        propSpeed: this.latestMeasured.rpm,
+        cylinderHeadTemp: this.latestMeasured.cht_C,
+        fuelFlow: this.latestMeasured.fuelFlow_L_h,
+      };
+
+      const resp = await fetch(API_AI_ANALYZE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (resp.ok) {
+        const diag: AIAgentDiagnostic = await resp.json();
+        this.aiDiagnostic = diag;
+
+        if (
+          diag.status === 'CRITICAL' ||
+          (diag.fault_detected && (diag.severity === 'HIGH' || diag.severity === 'CRITICAL'))
+        ) {
+          this.aiAgentStatus = 'FAULT DETECTED';
+        } else if (diag.status === 'WARNING' || diag.fault_detected) {
+          this.aiAgentStatus = 'WARNING';
+        } else {
+          this.aiAgentStatus = 'ONLINE';
+        }
+        this.aiAgentNotice = diag.summary || `Local AI analysis nominal (${diag.model})`;
+      } else {
+        if (resp.status === 503) {
+          const errData = await resp.json().catch(() => ({}));
+          if (errData.detail && errData.detail.includes('not found in local Ollama')) {
+            this.aiAgentStatus = 'MODEL UNAVAILABLE';
+            this.aiAgentNotice = 'Configured model not installed';
+            console.warn(`[Local AI Agent] ${errData.detail}`);
+            return;
+          }
+        }
+        this.aiAgentStatus = 'OFFLINE';
+        this.aiAgentNotice = 'Local AI unavailable — telemetry simulation continues.';
+      }
+    } catch {
+      this.aiAgentStatus = 'OFFLINE';
+      this.aiAgentNotice = 'Local AI unavailable — telemetry simulation continues.';
+    } finally {
+      this.isAnalyzingWithAI = false;
+      this.broadcastState();
     }
   }
 
@@ -638,6 +796,20 @@ export class EngineSimulator {
       fuelFlow: this.latestMeasured.fuelFlow_L_h,
     });
 
+    // 13. Health check and Local AI Agent (Ollama) diagnosis every 6-8 seconds
+    if (!this.aiHasAttemptedHealthCheck || this.tickCount - this.lastAIHealthTick >= 15) {
+      this.lastAIHealthTick = this.tickCount;
+      this.checkAIHealth();
+    }
+
+    if (
+      this.aiAgentStatus !== 'MODEL UNAVAILABLE' &&
+      (this.tickCount - this.lastAIAnalyzeTick >= 7)
+    ) {
+      this.lastAIAnalyzeTick = this.tickCount;
+      this.queryAIAgent();
+    }
+
     this.broadcastState();
   }
 
@@ -704,6 +876,10 @@ export class EngineSimulator {
       mlConfidence: this.mlConfidence,
       mlProbabilities: this.mlProbabilities,
       mlStatus: this.mlStatus,
+      // Local Ollama AI Agent
+      aiAgentStatus: this.aiAgentStatus,
+      aiAgentNotice: this.aiAgentNotice,
+      aiDiagnostic: this.aiDiagnostic,
       // Extended channels
       exhaustGasTemp: meas.egt_C,
       manifoldAirPressure: meas.manifoldPressure_bar,

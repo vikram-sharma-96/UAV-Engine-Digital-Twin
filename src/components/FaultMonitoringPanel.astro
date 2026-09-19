@@ -48,6 +48,48 @@ const { faults } = initialEngineData;
     </div>
   </div>
 
+  <!-- Local Ollama AI Diagnostic Block -->
+  <div id="ai-diagnostic-panel" class="mb-3 p-3 rounded-lg bg-[#080d19] border border-slate-800 text-xs font-mono-tech transition-colors">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+      <div class="flex items-center gap-2">
+        <span id="ai-diag-pulse-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+        <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">AI DIAGNOSTIC</span>
+        <span id="ai-diag-model-chip" class="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400">LOCAL COPILOT</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="ai-diag-severity-pill" class="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+          STATUS: NOMINAL
+        </span>
+        <span id="ai-diag-confidence" class="text-cyan-400 font-bold text-[11px]">
+          AI CONFIDENCE: --
+        </span>
+      </div>
+    </div>
+
+    <!-- AI Diagnostic Content Body -->
+    <div id="ai-diag-body" class="mt-2 space-y-1.5 text-[11px]">
+      <div id="ai-diag-title" class="font-bold text-slate-200 flex items-center gap-1.5">
+        <span class="text-emerald-400">Systems nominal</span>
+      </div>
+      <div id="ai-diag-summary" class="text-slate-400 leading-relaxed">
+        Awaiting telemetry analysis from local AI diagnostic agent...
+      </div>
+      
+      <!-- Affected Parameters & Recommended Action (Expanded when fault detected) -->
+      <div id="ai-diag-details" class="hidden mt-2 pt-2 border-t border-slate-800/60 space-y-1.5">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">AFFECTED SENSOR PARAMETERS:</div>
+        <div id="ai-diag-affected" class="text-amber-300 font-medium pl-2 border-l-2 border-amber-500/50 text-[10px] space-y-0.5">
+          --
+        </div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">RECOMMENDED MAINTENANCE ACTION:</div>
+        <div id="ai-diag-action" class="text-slate-300 pl-2 border-l-2 border-cyan-500/50 text-[10px]">
+          --
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Recent Events List -->
   <div class="space-y-2" id="fault-events-container">
     <div class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400 flex items-center justify-between">
@@ -55,7 +97,7 @@ const { faults } = initialEngineData;
       <span>REAL-TIME FIFO</span>
     </div>
 
-    <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1" id="events-list">
+    <div class="space-y-1.5 max-h-[140px] overflow-y-auto pr-1" id="events-list">
       {faults.recentEvents.map((evt) => (
         <div class="event-item flex items-center justify-between p-2 rounded bg-slate-950/60 border border-slate-800/60 text-xs font-mono-tech hover:border-slate-700 transition-colors">
           <div class="flex items-center gap-2">
@@ -92,7 +134,7 @@ const { faults } = initialEngineData;
         ML MODEL OFFLINE
       </span>
     </div>
-    <span class="text-emerald-400 font-semibold" id="fault-isolation-conf">ISOLATION CONFIDENCE: 99.1%</span>
+    <span class="text-emerald-400 font-semibold" id="fault-isolation-conf" title="AI diagnostic reasoning confidence (non-certified diagnostic metric)">AI CONFIDENCE: 95.0%</span>
   </div>
 </div>
 
@@ -106,7 +148,19 @@ const { faults } = initialEngineData;
   const isoConf = document.getElementById('fault-isolation-conf');
   const mlBadge = document.getElementById('fault-ml-badge');
 
+  // AI Diagnostic elements
+  const aiDiagPulseDot = document.getElementById('ai-diag-pulse-dot');
+  const aiDiagModelChip = document.getElementById('ai-diag-model-chip');
+  const aiDiagSeverityPill = document.getElementById('ai-diag-severity-pill');
+  const aiDiagConfidence = document.getElementById('ai-diag-confidence');
+  const aiDiagTitle = document.getElementById('ai-diag-title');
+  const aiDiagSummary = document.getElementById('ai-diag-summary');
+  const aiDiagDetails = document.getElementById('ai-diag-details');
+  const aiDiagAffected = document.getElementById('ai-diag-affected');
+  const aiDiagAction = document.getElementById('ai-diag-action');
+
   let lastKnownFault = 'None';
+  let lastKnownAIFault = 'NONE';
 
   document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
     const s = e.detail;
@@ -150,18 +204,139 @@ const { faults } = initialEngineData;
         mlBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ML MODEL: ONLINE (RF)';
         mlBadge.className = 'text-emerald-400 flex items-center gap-1 font-semibold';
       } else {
-        mlBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ML MODEL OFFLINE';
-        mlBadge.className = 'text-amber-400 flex items-center gap-1 font-semibold';
+        mlBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> ML MODEL OFFLINE';
+        mlBadge.className = 'text-slate-400 flex items-center gap-1 font-semibold';
       }
     }
 
-    if (isoConf) {
-      const confPct = typeof s.mlConfidence === 'number' ? (s.mlConfidence * 100).toFixed(1) : '99.1';
-      isoConf.textContent = `ML CONFIDENCE: ${confPct}%`;
-      if (hasFault) {
-        isoConf.className = 'text-amber-400 font-bold';
+    // AI Diagnostic Block Rendering
+    const diag = s.aiDiagnostic;
+    if (diag) {
+      const confPct = typeof diag.confidence === 'number' ? diag.confidence.toFixed(0) : '95';
+
+      if (aiDiagConfidence) {
+        aiDiagConfidence.textContent = `AI CONFIDENCE: ${confPct}%`;
+      }
+      if (isoConf) {
+        isoConf.textContent = `AI DIAGNOSTIC CONFIDENCE: ${confPct}%`;
+        isoConf.title = 'Local LLM diagnostic reasoning confidence (non-certified diagnostic metric)';
+        if (diag.status === 'CRITICAL' || diag.status === 'WARNING') {
+          isoConf.className = 'text-amber-400 font-bold';
+        } else {
+          isoConf.className = 'text-emerald-400 font-semibold';
+        }
+      }
+
+      if (aiDiagModelChip && diag.model) {
+        aiDiagModelChip.textContent = diag.model.toUpperCase();
+      }
+
+      const isFault = diag.status === 'WARNING' || diag.status === 'CRITICAL' || diag.fault_detected;
+
+      if (!isFault) {
+        if (aiDiagPulseDot) aiDiagPulseDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        if (aiDiagSeverityPill) {
+          aiDiagSeverityPill.textContent = 'STATUS: NOMINAL';
+          aiDiagSeverityPill.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-500/30';
+        }
+        if (aiDiagTitle) {
+          aiDiagTitle.innerHTML = `<span class="text-emerald-400 font-bold">Systems nominal</span>`;
+        }
+        if (aiDiagSummary) {
+          aiDiagSummary.textContent = diag.summary || 'Engine operational parameters nominal and within certified flight envelope.';
+        }
+        if (aiDiagDetails) {
+          aiDiagDetails.classList.add('hidden');
+        }
       } else {
-        isoConf.className = 'text-emerald-400 font-semibold';
+        const isCrit = diag.status === 'CRITICAL' || diag.severity === 'CRITICAL' || diag.severity === 'HIGH';
+        if (aiDiagPulseDot) {
+          aiDiagPulseDot.className = isCrit
+            ? 'w-2 h-2 rounded-full bg-rose-500 animate-ping'
+            : 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+        }
+        if (aiDiagSeverityPill) {
+          aiDiagSeverityPill.textContent = `SEVERITY: ${diag.severity || (isCrit ? 'HIGH' : 'MEDIUM')}`;
+          aiDiagSeverityPill.className = isCrit
+            ? 'text-[9px] px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-500/30 font-bold'
+            : 'text-[9px] px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-500/30 font-bold';
+        }
+        if (aiDiagTitle) {
+          const typeStr = (diag.fault_type || 'FAULT DETECTED').replace(/_/g, ' ');
+          aiDiagTitle.innerHTML = `<span class="${isCrit ? 'text-rose-400' : 'text-amber-400'} font-bold">FAULT DETECTED: ${typeStr}</span>`;
+        }
+        if (aiDiagSummary) {
+          aiDiagSummary.textContent = diag.summary || diag.reasoning || 'Abnormal sensor telemetry detected.';
+        }
+        if (aiDiagDetails) {
+          aiDiagDetails.classList.remove('hidden');
+        }
+
+        // Format affected telemetry with actual measured transducer values
+        if (aiDiagAffected) {
+          const affectedList: string[] = [];
+          if (diag.affected_parameters && diag.affected_parameters.length > 0) {
+            for (const p of diag.affected_parameters) {
+              const pLower = p.toLowerCase();
+              if (pLower.includes('vib')) {
+                affectedList.push(`Vibration: ${s.vibration.toFixed(2)} mm/s RMS (Nominal: 0.8 - 2.0 mm/s)`);
+              } else if (pLower.includes('temp') || pLower.includes('cht')) {
+                affectedList.push(`Cylinder Head Temp: ${s.temperature.toFixed(1)} °C (Nominal: 70 - 85 °C)`);
+              } else if (pLower.includes('oil')) {
+                affectedList.push(`Oil Pressure: ${s.oilPressure.toFixed(2)} bar (Nominal: 3.8 - 5.0 bar)`);
+              } else if (pLower.includes('rpm') || pLower.includes('speed')) {
+                affectedList.push(`Crankshaft Speed: ${Math.round(s.rpm)} RPM (Nominal: 4,800 - 5,500 RPM)`);
+              } else if (pLower.includes('fuel')) {
+                affectedList.push(`Fuel Flow: ${s.fuelFlow.toFixed(2)} L/h (Nominal: 2.4 - 3.2 L/h)`);
+              } else {
+                affectedList.push(p);
+              }
+            }
+          }
+
+          // If empty list, check actual sensors to ensure values come from actual telemetry object
+          if (affectedList.length === 0) {
+            if (s.vibration > 2.0) affectedList.push(`Vibration: ${s.vibration.toFixed(2)} mm/s RMS`);
+            if (s.temperature > 85) affectedList.push(`Cylinder Head Temp: ${s.temperature.toFixed(1)} °C`);
+            if (s.oilPressure < 3.8) affectedList.push(`Oil Pressure: ${s.oilPressure.toFixed(2)} bar`);
+            if (s.rpm > 5500) affectedList.push(`Crankshaft Speed: ${Math.round(s.rpm)} RPM`);
+          }
+
+          aiDiagAffected.innerHTML = affectedList.map(item => `<div>&bull; ${item}</div>`).join('');
+        }
+
+        if (aiDiagAction) {
+          aiDiagAction.textContent = diag.recommended_action || 'Inspect affected engine systems and check sensor harnesses.';
+        }
+      }
+    } else {
+      // Fallback state when Ollama is offline or connecting
+      if (s.aiAgentStatus === 'OFFLINE') {
+        if (aiDiagPulseDot) aiDiagPulseDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        if (aiDiagSeverityPill) {
+          aiDiagSeverityPill.textContent = 'STATUS: OFFLINE';
+          aiDiagSeverityPill.className = 'text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-500 border border-slate-800';
+        }
+        if (aiDiagTitle) {
+          aiDiagTitle.innerHTML = `<span class="text-slate-400">Local AI Agent Offline</span>`;
+        }
+        if (aiDiagSummary) {
+          aiDiagSummary.textContent = 'Local AI unavailable — telemetry simulation continues.';
+        }
+        if (aiDiagDetails) aiDiagDetails.classList.add('hidden');
+      } else if (s.aiAgentStatus === 'MODEL UNAVAILABLE') {
+        if (aiDiagPulseDot) aiDiagPulseDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        if (aiDiagSeverityPill) {
+          aiDiagSeverityPill.textContent = 'MODEL UNAVAILABLE';
+          aiDiagSeverityPill.className = 'text-[9px] px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-500/30';
+        }
+        if (aiDiagTitle) {
+          aiDiagTitle.innerHTML = `<span class="text-amber-300">Model Not Installed</span>`;
+        }
+        if (aiDiagSummary) {
+          aiDiagSummary.textContent = s.aiAgentNotice || 'Configured Ollama model is missing. Check browser developer console for instructions.';
+        }
+        if (aiDiagDetails) aiDiagDetails.classList.add('hidden');
       }
     }
 
@@ -179,7 +354,7 @@ const { faults } = initialEngineData;
           <div class="flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
             <span class="text-rose-300 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
-              ML FDIR: ${s.activeFault} classified (${typeof s.mlConfidence === 'number' ? (s.mlConfidence * 100).toFixed(0) : '99'}% conf)
+              FDIR: ${s.activeFault} (${typeof s.mlConfidence === 'number' ? (s.mlConfidence * 100).toFixed(0) : '99'}% conf)
             </span>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -196,7 +371,7 @@ const { faults } = initialEngineData;
           <div class="flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
             <span class="text-emerald-300 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
-              ML Classification: Normal Operation nominal
+              Nominal flight regime verified
             </span>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -211,7 +386,6 @@ const { faults } = initialEngineData;
       }
 
       eventsList.prepend(newEvt);
-      // Limit to 8 events in DOM
       while (eventsList.children.length > 8) {
         eventsList.removeChild(eventsList.lastChild!);
       }

@@ -261,3 +261,185 @@ npm run dev
 # 3. Compile production bundle
 npm run build
 ```
+
+---
+
+## 🤖 LOCAL AI SETUP
+
+The UAV Engine Digital Twin includes a **Local AI Diagnostic Agent** powered by [Ollama](https://ollama.com). The AI Agent runs 100% locally on your machine, ingests real-time engine telemetry every 5–10 seconds, detects anomalies, assesses severity, and provides structured maintenance recommendations directly inside the avionics dashboard.
+
+### 1. Install Ollama
+Download and install Ollama for Windows, macOS, or Linux from:
+👉 **[https://ollama.com/download](https://ollama.com/download)**
+
+### 2. Start Ollama
+Ensure the Ollama local daemon is running:
+```powershell
+ollama serve
+```
+By default, Ollama serves on `http://localhost:11434`.
+
+### 3. Pull the Configured Model
+Pull the default model (`llama3.2`):
+```powershell
+ollama pull llama3.2
+```
+*(Note: If you have limited VRAM or prefer another model, e.g. `qwen2.5:3b` or `mistral`, you can pull that instead).*
+
+### 4. Set OLLAMA_MODEL (Optional)
+Copy the sample environment file if you wish to customize the model or Ollama host:
+```powershell
+cp .env.example .env
+```
+Contents of `.env`:
+```env
+OLLAMA_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
+```
+> **Security Note**: No API keys are needed or exposed because Ollama executes entirely locally. Do not commit secrets.
+
+### 5. Start the Backend
+In a terminal, activate your virtual environment and start the FastAPI service:
+```powershell
+# Activate Python virtual environment
+.\.venv\Scripts\Activate.ps1
+
+# Start FastAPI on port 8000
+npm run backend
+# Or directly:
+# uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+Verify the backend and AI agent health:
+- Swagger Docs: `http://127.0.0.1:8000/docs`
+- AI Health Check: `http://127.0.0.1:8000/api/ai/health`
+
+### 6. Start the Frontend
+In another terminal, launch the Astro development server:
+```powershell
+npm run dev
+```
+Open **`http://localhost:4321`** in your browser.
+
+---
+
+* **Local AI Only**: The Ollama integration is explicitly designed as a local-first engineering copilot. The production Vercel frontend does not assume `localhost:11434` or `localhost:8000` exists on the remote hosting infrastructure.
+* **Graceful Degradation**: If the dashboard is opened without the local backend or Ollama running:
+  - The **AI AGENT** status cleanly displays **`Offline`**.
+  - A non-intrusive status notice informs the user: *"Local AI unavailable — telemetry simulation continues."*
+  - The underlying Mean-Value physics simulation, transducer telemetry, isometric 3D twin, and deterministic charts continue functioning with zero degradation or browser errors.
+* **Model Availability Check**: If Ollama is running but the configured model is missing, the AI Agent displays **`Model unavailable`** and prints a helpful guide in the browser developer console indicating which model to pull.
+
+---
+
+## 🎙️ Voice Copilot Setup (ElevenLabs)
+
+The AI ENGINE HEALTH COPILOT supports full **voice + text** interaction:
+
+- 🎤 **Speech-to-Text** (STT): ElevenLabs `scribe_v2` — transcribes your spoken question
+- 🤖 **Reasoning**: Local Ollama — generates the AI response grounded in live telemetry
+- 🔊 **Text-to-Speech** (TTS): ElevenLabs `eleven_flash_v2_5` — reads the AI response aloud
+
+### Architecture
+
+```
+User speaks → Browser mic
+                 ↓
+     Backend /api/voice/transcribe
+                 ↓
+    ElevenLabs STT (scribe_v2)
+                 ↓
+           Transcript text
+                 ↓
+       Backend /api/ai/chat
+                 ↓
+        Ollama llama3.2 + live telemetry
+                 ↓
+           AI response text
+                 ↓
+     Backend /api/voice/speak
+                 ↓
+  ElevenLabs TTS (eleven_flash_v2_5)
+                 ↓
+         Browser plays audio
+```
+
+### Step-by-Step Setup
+
+**1. Create an ElevenLabs account**
+- Go to [https://elevenlabs.io](https://elevenlabs.io) and create a free account.
+
+**2. Get your API key**
+- Navigate to **Profile → API Keys** or [https://elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)
+- Create a new key with **restricted permissions** (Speech-to-Text + Text-to-Speech only)
+
+**3. Choose a voice**
+- Browse the Voice Library at [https://elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library)
+- Copy the **Voice ID** of your preferred voice
+
+**4. Configure your `.env` file**
+```env
+OLLAMA_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
+
+ELEVENLABS_API_KEY=your_api_key_here
+ELEVENLABS_VOICE_ID=your_voice_id_here
+ELEVENLABS_STT_MODEL=scribe_v2
+ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
+```
+
+**5. Start the backend**
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+**6. Verify voice is ready**
+- Open `http://localhost:4321`
+- The Copilot panel should show a green **VOICE READY** badge
+- The 🎤 mic button will be active
+
+### How to Use Voice Mode
+
+1. Click the 🎤 **mic button** → button turns red and pulses → **LISTENING...**
+2. Speak your question clearly
+3. Click the mic button again to stop recording → **TRANSCRIBING...**
+4. Your transcript appears as a chat bubble
+5. AI analyzes with live telemetry → **ANALYZING...**
+6. AI response appears, audio plays automatically → **AI SPEAKING...**
+7. Each AI response has a **SPEAK** / **STOP** button for replay
+
+### Shared Context
+
+Text and voice conversations share the **same conversation history**. You can type a question and follow up by voice — the AI maintains full context.
+
+### Security
+
+> [!CAUTION]
+> **Never** put `ELEVENLABS_API_KEY` in frontend JavaScript, HTML, localStorage, or any public-facing location.
+> The browser **only** calls `http://localhost:8000/api/voice/transcribe` and `http://localhost:8000/api/voice/speak`.
+> The actual ElevenLabs API calls are made **exclusively from the backend**, keeping your API key completely private.
+
+The `.env` file is listed in `.gitignore` and will never be committed to your repository.
+
+### Graceful Degradation
+
+| Condition | Result |
+|-----------|--------|
+| ElevenLabs not configured | Mic disabled, **VOICE OFFLINE** badge, text chat works normally |
+| ElevenLabs STT fails | Error shown in chat, text chat unaffected |
+| ElevenLabs TTS fails | AI text reply shown normally, no audio |
+| Ollama offline | Error bubble in chat, both text and voice show AI offline |
+| Mic permission denied | Error notice in chat window |
+
+### Component Roles
+
+| Component | Role |
+|-----------|------|
+| **ElevenLabs STT** | Converts your spoken audio to text |
+| **ElevenLabs TTS** | Converts AI text response to speech |
+| **Ollama (local)** | Conversational reasoning and explanation layer |
+| **FDIR** | Deterministic fault detection rules (separate from Ollama) |
+| **Digital Twin** | Physics engine simulation and telemetry source |
+
+> **Engineering note**: Ollama is the *explanation* layer — it interprets detected conditions and provides recommendations in natural language. Fault detection is the responsibility of the deterministic FDIR rules engine and the trained ML models. Ollama is not certified for fault detection.
+

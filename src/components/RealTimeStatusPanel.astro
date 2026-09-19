@@ -1,8 +1,6 @@
----
 import { initialEngineData } from '../data/engineTelemetry';
 
 const { system } = initialEngineData;
----
 
 <div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
   <!-- Header -->
@@ -31,10 +29,7 @@ const { system } = initialEngineData;
     </span>
   </div>
 
-  <!-- Status Rows Grid -->
   <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 my-3 font-mono-tech text-xs">
-    
-    <!-- 1. DATA STREAM -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
       <span class="text-[10px] text-slate-400 uppercase">DATA STREAM</span>
       <div class="flex items-center gap-1.5 font-bold text-emerald-400 mt-1">
@@ -43,7 +38,6 @@ const { system } = initialEngineData;
       </div>
     </div>
 
-    <!-- 2. UPDATE RATE -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
       <span class="text-[10px] text-slate-400 uppercase">UPDATE RATE</span>
       <div class="font-bold text-cyan-400 mt-1">
@@ -51,7 +45,6 @@ const { system } = initialEngineData;
       </div>
     </div>
 
-    <!-- 3. DATA SOURCE -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
       <span class="text-[10px] text-slate-400 uppercase">DATA SOURCE</span>
       <div class="font-bold text-slate-200 truncate mt-1" title={system.dataSource}>
@@ -59,16 +52,14 @@ const { system } = initialEngineData;
       </div>
     </div>
 
-    <!-- 4. MODEL STATUS -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
       <span class="text-[10px] text-slate-400 uppercase">MODEL STATUS</span>
       <div class="font-bold text-slate-400 mt-1 flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-        {system.mlModelStatus}
+        <span id="rt-model-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+        <span id="rt-model-status">{system.mlModelStatus}</span>
       </div>
     </div>
 
-    <!-- 5. AI AGENT -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between col-span-2 sm:col-span-1">
       <span class="text-[10px] text-slate-400 uppercase">AI AGENT</span>
       <div id="rt-agent-status-container" class="font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
@@ -76,7 +67,14 @@ const { system } = initialEngineData;
         <span id="rt-agent-status-text">ONLINE</span>
       </div>
     </div>
+  </div>
 
+  <div id="ai-agent-notice-bar" class="hidden mb-2 px-2.5 py-1 rounded bg-slate-900/90 border border-slate-800 text-[10px] font-mono-tech text-slate-400 flex items-center justify-between">
+    <div class="flex items-center gap-1.5 truncate">
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-400/80 shrink-0"></span>
+      <span id="ai-agent-notice-msg" class="truncate">Local AI unavailable — telemetry simulation continues.</span>
+    </div>
+    <span class="text-[9px] text-slate-500 shrink-0 ml-2 font-semibold">LOCAL AGENT</span>
   </div>
 
   <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
@@ -93,12 +91,11 @@ const { system } = initialEngineData;
   function updateAgentStatus(statusText: string, color: 'emerald' | 'amber' | 'cyan' | 'purple' | 'slate') {
     if (!agentDot || !agentText || !agentContainer) return;
     agentText.textContent = statusText;
-    
+
     agentContainer.className = `font-bold text-${color}-400 mt-1 flex items-center gap-1.5`;
     agentDot.className = `w-1.5 h-1.5 rounded-full bg-${color}-400 animate-pulse`;
   }
 
-  // Listen to voice state events from AiAgentPlaceholder
   window.addEventListener('voice-state-changed', (e: any) => {
     const state = e.detail?.state;
     if (state === 'listening') {
@@ -112,7 +109,6 @@ const { system } = initialEngineData;
     }
   });
 
-  // Check agent status endpoint
   async function checkAgentStatus() {
     try {
       const res = await fetch('/api/agent/status');

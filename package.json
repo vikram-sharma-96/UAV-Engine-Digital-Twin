@@ -14,7 +14,8 @@
     "server": "node scripts/server.ts",
     "desktop": "node scripts/desktop.ts",
     "benchmark": "node scripts/benchmark.ts",
-    "dataset": "node scripts/generate_dataset.ts"
+    "dataset": "node scripts/generate_dataset.ts",
+    "backend": "uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

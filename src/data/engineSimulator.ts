@@ -164,7 +164,7 @@ export const SCENARIO_TARGETS: Record<SimulationMode, ScenarioTarget> = {
   },
 };
 
-const API_PREDICT_URL = 'http://localhost:8000/predict';
+const API_PREDICT_URL = 'http://localhost:8000/api/predict';
 const MAX_HISTORY = 30;
 type StateCallback = (state: EngineState) => void;
 

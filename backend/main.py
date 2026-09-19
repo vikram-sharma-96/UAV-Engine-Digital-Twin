@@ -97,6 +97,12 @@ def get_health():
     status_code=status.HTTP_200_OK,
     tags=["Fault Inference"],
 )
+@app.post(
+    "/predict",
+    response_model=PredictionResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
 def predict_engine_fault(telemetry: TelemetryInput):
     """
     Predict engine fault condition from real-time sensor telemetry.

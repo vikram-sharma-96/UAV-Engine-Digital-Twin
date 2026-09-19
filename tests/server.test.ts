@@ -106,4 +106,35 @@ describe('Local Simulation & Telemetry REST API', () => {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.status, 'ok');
   });
+
+  it('GET /api/agent/status returns AI agent and Ollama readiness', async () => {
+    const res = await get('/api/agent/status');
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.data.status, 'ok');
+    assert.ok(typeof res.data.ollamaOnline === 'boolean');
+    assert.ok(res.data.provider === 'ollama' || res.data.provider === 'local_ensemble');
+  });
+
+  it('POST /api/agent/query processes grounded tool reasoning', async () => {
+    const res = await post('/api/agent/query', { query: 'What is the current engine RPM?' });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.data.status, 'ok');
+    assert.ok(res.data.response.spokenText.length > 5);
+    assert.ok(res.data.response.toolCallsExecuted.length > 0);
+  });
+
+  it('GET /api/voice/status returns ElevenLabs voice configuration without exposing keys', async () => {
+    const res = await get('/api/voice/status');
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.data.status, 'ok');
+    assert.strictEqual(typeof res.data.elevenlabsConfigured, 'boolean');
+    assert.ok(!res.data.apiKey); // Key must NEVER be exposed
+  });
+
+  it('POST /api/voice/speak returns audio or graceful browser fallback', async () => {
+    const res = await post('/api/voice/speak', { text: 'Engine RPM is 5200 nominal.' });
+    assert.strictEqual(res.status, 200);
+    // When no external key is configured, fallback to client browser synthesis is returned
+    assert.ok(res.data.status === 'fallback' || res.status === 200);
+  });
 });

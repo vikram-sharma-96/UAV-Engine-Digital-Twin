@@ -71,9 +71,9 @@ const { system } = initialEngineData;
     <!-- 5. AI AGENT -->
     <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between col-span-2 sm:col-span-1">
       <span class="text-[10px] text-slate-400 uppercase">AI AGENT</span>
-      <div class="font-bold text-amber-400 mt-1 flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-        {system.aiAgentStatus}
+      <div id="rt-agent-status-container" class="font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+        <span id="rt-agent-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="rt-agent-status-text">ONLINE</span>
       </div>
     </div>
 
@@ -84,3 +84,50 @@ const { system } = initialEngineData;
     <span class="text-cyan-400">LATENCY: 12 ms</span>
   </div>
 </div>
+
+<script>
+  const agentDot = document.getElementById('rt-agent-status-dot');
+  const agentText = document.getElementById('rt-agent-status-text');
+  const agentContainer = document.getElementById('rt-agent-status-container');
+
+  function updateAgentStatus(statusText: string, color: 'emerald' | 'amber' | 'cyan' | 'purple' | 'slate') {
+    if (!agentDot || !agentText || !agentContainer) return;
+    agentText.textContent = statusText;
+    
+    agentContainer.className = `font-bold text-${color}-400 mt-1 flex items-center gap-1.5`;
+    agentDot.className = `w-1.5 h-1.5 rounded-full bg-${color}-400 animate-pulse`;
+  }
+
+  // Listen to voice state events from AiAgentPlaceholder
+  window.addEventListener('voice-state-changed', (e: any) => {
+    const state = e.detail?.state;
+    if (state === 'listening') {
+      updateAgentStatus('LISTENING', 'amber');
+    } else if (state === 'processing') {
+      updateAgentStatus('REASONING', 'cyan');
+    } else if (state === 'speaking') {
+      updateAgentStatus('SPEAKING', 'purple');
+    } else {
+      updateAgentStatus('ONLINE', 'emerald');
+    }
+  });
+
+  // Check agent status endpoint
+  async function checkAgentStatus() {
+    try {
+      const res = await fetch('/api/agent/status');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ollamaReady) {
+          updateAgentStatus('OLLAMA READY', 'emerald');
+        } else {
+          updateAgentStatus('ENSEMBLE ACTIVE', 'emerald');
+        }
+      }
+    } catch {
+      updateAgentStatus('LOCAL READY', 'emerald');
+    }
+  }
+
+  checkAgentStatus();
+</script>

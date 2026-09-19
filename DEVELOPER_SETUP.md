@@ -15,11 +15,14 @@
 # 1. Install frontend build dependencies (Astro 5 & Tailwind 4)
 npm install
 
-# 2. Run the automated engineering verification suite
+# 2. (Optional) Configure ElevenLabs API key for voice streaming
+cp .env.example .env
+
+# 3. Run the automated engineering verification suite
 npm run test
 ```
 
-All **27 unit and integration tests across 13 engineering suites** should execute and pass in $\sim 1.5\text{ seconds}$.
+All **42 unit and integration tests across 16 engineering suites** should execute and pass in $\sim 2.0\text{ seconds}$.
 
 ---
 
@@ -30,8 +33,8 @@ All **27 unit and integration tests across 13 engineering suites** should execut
 | `npm run dev` | Interactive Development | Starts Astro development server with instant HMR at `http://localhost:4321` |
 | `npm run build` | Static Production | Compiles all 8 Astro pages and client assets into `dist/` |
 | `npm run desktop` | Native Desktop App | Boots the local simulation server and opens Chromium/Edge in windowed App Mode |
-| `npm run server` | Headless API Daemon | Runs zero-dependency Node HTTP server exposing REST endpoints and SSE stream |
-| `npm run test` | Verification Suite | Executes all 27 unit & integration tests (`node --test tests/*.test.ts`) |
+| `npm run server` | Headless API Daemon | Runs zero-dependency Node HTTP server exposing REST endpoints, SSE stream, and ElevenLabs voice proxy |
+| `npm run test` | Verification Suite | Executes all 42 unit & integration tests (`node --test tests/*.test.ts`) |
 | `npm run benchmark` | Performance Profiling | Simulates 10,000 real-time cycles and measures throughput, latency, and memory |
 | `npm run dataset` | Dataset Generation | Generates synthetic labeled telemetry CSV files for machine learning training |
 

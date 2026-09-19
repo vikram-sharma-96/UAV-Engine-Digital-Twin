@@ -54,20 +54,38 @@
 
       <div class="space-y-1">
         <label class="text-slate-400 block text-[11px]">AI BACKEND INTEGRATION</label>
-        <div class="p-2.5 rounded bg-[#080d1a] border border-amber-500/30 flex items-center justify-between text-[11px]">
-          <span class="text-slate-300">Ollama API Host</span>
-          <span class="text-amber-400 font-bold">http://localhost:11434 (Standby)</span>
+        <div class="p-2.5 rounded bg-[#080d1a] border border-cyan-500/30 flex items-center justify-between text-[11px]">
+          <div>
+            <div class="text-slate-200 font-semibold">Local Ollama LLM / Rule Daemon</div>
+            <div class="text-[10px] text-slate-400">http://localhost:11434 (llama3 / mistral)</div>
+          </div>
+          <span id="settings-ollama-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/70 border border-amber-500/50 text-amber-300">
+            CONNECTING...
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-slate-400 block text-[11px]">VOICE SYNTHESIS SUBSYSTEM</label>
+        <div class="p-2.5 rounded bg-[#080d1a] border border-cyan-500/30 flex items-center justify-between text-[11px]">
+          <div>
+            <div class="text-slate-200 font-semibold">Voice Provider</div>
+            <div id="settings-voice-subtext" class="text-[10px] text-slate-400">ElevenLabs Audio Stream / Web Speech</div>
+          </div>
+          <span id="settings-voice-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950/70 border border-cyan-500/50 text-cyan-300">
+            INSPECTING...
+          </span>
         </div>
       </div>
 
       <div class="p-2.5 rounded bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
-        <strong>NOTE:</strong> Telemetry streams and AI reasoning endpoints will connect during Stage 2 backend integration. Current view displays real-time simulated avionics telemetry.
+        <strong>SECURITY & OFFLINE GUARANTEE:</strong> ElevenLabs API keys are strictly retained on the backend proxy and never sent to the browser. If no key is set or the network is unavailable, AeroTwin seamlessly operates offline using client-side SpeechSynthesis and local physics-grounded heuristics.
       </div>
     </div>
 
     <!-- Modal Actions -->
     <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-      <button id="dismiss-settings-btn" class="px-4 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold tracking-wide transition-colors">
+      <button id="dismiss-settings-btn" class="px-4 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold tracking-wide transition-colors cursor-pointer">
         SAVE & CLOSE
       </button>
     </div>
@@ -78,10 +96,58 @@
   const dialog = document.getElementById('settings-dialog');
   const closeBtn = document.getElementById('close-settings-btn');
   const dismissBtn = document.getElementById('dismiss-settings-btn');
+  const ollamaBadge = document.getElementById('settings-ollama-badge');
+  const voiceBadge = document.getElementById('settings-voice-badge');
+  const voiceSubtext = document.getElementById('settings-voice-subtext');
 
   function toggleDialog() {
     dialog?.classList.toggle('hidden');
     dialog?.classList.toggle('flex');
+    if (!dialog?.classList.contains('hidden')) {
+      inspectSubsystems();
+    }
+  }
+
+  async function inspectSubsystems() {
+    try {
+      const agentRes = await fetch('/api/agent/status');
+      if (agentRes.ok && ollamaBadge) {
+        const data = await agentRes.json();
+        if (data.ollamaReady) {
+          ollamaBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950/70 border border-emerald-500/50 text-emerald-300';
+          ollamaBadge.textContent = 'ONLINE (OLLAMA)';
+        } else {
+          ollamaBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 border border-slate-700 text-slate-300';
+          ollamaBadge.textContent = 'LOCAL ENSEMBLE (OFFLINE)';
+        }
+      }
+    } catch {
+      if (ollamaBadge) {
+        ollamaBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 border border-slate-700 text-slate-300';
+        ollamaBadge.textContent = 'STANDBY (LOCAL)';
+      }
+    }
+
+    try {
+      const voiceRes = await fetch('/api/voice/status');
+      if (voiceRes.ok && voiceBadge) {
+        const vData = await voiceRes.json();
+        if (vData.configured) {
+          voiceBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950/70 border border-purple-500/50 text-purple-300';
+          voiceBadge.textContent = 'ELEVENLABS ACTIVE';
+          if (voiceSubtext) voiceSubtext.textContent = `Model: ${vData.modelId || 'eleven_turbo_v2_5'}`;
+        } else {
+          voiceBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950/70 border border-cyan-500/50 text-cyan-300';
+          voiceBadge.textContent = 'WEB SPEECH FALLBACK';
+          if (voiceSubtext) voiceSubtext.textContent = 'Offline Browser SpeechSynthesis';
+        }
+      }
+    } catch {
+      if (voiceBadge) {
+        voiceBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950/70 border border-cyan-500/50 text-cyan-300';
+        voiceBadge.textContent = 'BROWSER SPEECH READY';
+      }
+    }
   }
 
   window.addEventListener('toggle-settings-dialog', toggleDialog);
@@ -90,4 +156,6 @@
   dialog?.addEventListener('click', (e) => {
     if (e.target === dialog) toggleDialog();
   });
+
+  inspectSubsystems();
 </script>

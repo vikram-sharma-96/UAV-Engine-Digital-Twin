@@ -34,6 +34,8 @@ import { simulator } from '../src/data/engineSimulator.ts';
 import { DEFAULT_ENGINE_PROFILE } from '../src/engine/config/defaultEngineProfile.ts';
 import { DatasetGenerator } from '../src/engine/dataset/datasetGenerator.ts';
 import type { CounterfactualIntervention, FaultDefinition } from '../src/engine/types.ts';
+import { elevenLabsClient } from '../src/engine/voice/elevenLabsClient.ts';
+import { ollamaAgent } from '../src/engine/ai/ollamaProvider.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -243,6 +245,104 @@ const server = http.createServer(async (req, res) => {
           sseClients.delete(res);
         });
         return;
+      }
+
+      // GET /api/agent/status
+      if (pathname === '/api/agent/status' && method === 'GET') {
+        const online = await ollamaAgent.isAvailable();
+        const models = online ? await ollamaAgent.getInstalledModels() : [];
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'ok',
+          provider: online ? 'ollama' : 'local_ensemble',
+          ollamaOnline: online,
+          installedModels: models,
+          activeModel: models[0] || 'local-rule-bayesian-ensemble',
+        }));
+        return;
+      }
+
+      // POST /api/agent/query
+      if (pathname === '/api/agent/query' && method === 'POST') {
+        const body = await parseJsonBody<any>(req);
+        const queryText = (body.query || '').trim();
+        const history = body.history || [];
+        const agentResponse = await ollamaAgent.query(queryText, history);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', response: agentResponse }));
+        return;
+      }
+
+      // GET /api/voice/status
+      if (pathname === '/api/voice/status' && method === 'GET') {
+        const configured = elevenLabsClient.isConfigured();
+        const available = configured ? await elevenLabsClient.isAvailable() : false;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          status: 'ok',
+          elevenlabsConfigured: configured,
+          elevenlabsOnline: available,
+          voiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM',
+          model: process.env.ELEVENLABS_TTS_MODEL || 'eleven_turbo_v2_5',
+        }));
+        return;
+      }
+
+      // POST /api/voice/speak
+      if (pathname === '/api/voice/speak' && method === 'POST') {
+        const body = await parseJsonBody<any>(req);
+        const text = (body.text || '').trim();
+        const voiceId = body.voiceId;
+
+        if (!text) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Text parameter is required' }));
+          return;
+        }
+
+        if (!elevenLabsClient.isConfigured()) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            status: 'fallback',
+            provider: 'browser',
+            message: 'ElevenLabs API key not configured on server. Use client speech synthesis.',
+            text,
+          }));
+          return;
+        }
+
+        try {
+          const audioStream = await elevenLabsClient.synthesizeSpeech(text, { voiceId });
+          if (!audioStream) {
+            res.writeHead(204);
+            res.end();
+            return;
+          }
+
+          res.writeHead(200, {
+            'Content-Type': 'audio/mpeg',
+            'Transfer-Encoding': 'chunked',
+            'Cache-Control': 'no-cache',
+          });
+
+          const reader = audioStream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+          }
+          res.end();
+          return;
+        } catch (ttsErr: any) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            status: 'fallback',
+            provider: 'browser',
+            message: `ElevenLabs TTS error: ${ttsErr.message}`,
+            text,
+          }));
+          return;
+        }
       }
 
       // Route not found

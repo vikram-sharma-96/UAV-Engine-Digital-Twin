@@ -1,10 +1,11 @@
 ---
-// AiAgentPlaceholder.astro - AI Engine Health Copilot (Rule 26 Compliant Grounded Reasoning)
+// AiAgentPlaceholder.astro - AI Engine Health Copilot with ElevenLabs Voice & Local Reasoning
 const suggestedQuestions = [
   "Why is engine health decreasing?",
   "What caused the vibration increase?",
   "What should I inspect?",
-  "Recommend inspection interval"
+  "Recommend inspection interval",
+  "Simulate 15% load increase"
 ];
 ---
 
@@ -26,7 +27,7 @@ const suggestedQuestions = [
             AI ENGINE HEALTH COPILOT
           </h3>
           <span class="text-[9px] font-mono-tech px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40">
-            LOCAL REASONING DAEMON
+            ELEVENLABS VOICE + OLLAMA
           </span>
         </div>
         <p class="text-[11px] text-slate-400 font-mono-tech">
@@ -35,14 +36,46 @@ const suggestedQuestions = [
       </div>
     </div>
 
-    <!-- Active Status Badge -->
-    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 text-xs font-mono-tech shadow-[0_0_10px_rgba(16,185,129,0.15)]">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="font-semibold">AI Copilot Active — Local Ensemble / Standby Ollama</span>
+    <!-- Active Status & Voice Controls -->
+    <div class="flex items-center gap-2">
+      <!-- Voice State Badge -->
+      <div id="voice-state-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 text-xs font-mono-tech shadow-[0_0_10px_rgba(16,185,129,0.15)] transition-all">
+        <span id="voice-state-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="voice-state-text" class="font-semibold">AI Copilot Ready</span>
+      </div>
+
+      <!-- Stop Speaking / Barge-In Button (Hidden unless speaking) -->
+      <button 
+        type="button" 
+        id="barge-in-btn" 
+        class="hidden items-center gap-1 px-2.5 py-1 rounded bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/50 text-xs font-mono-tech font-bold cursor-pointer transition-colors shadow-[0_0_8px_rgba(244,63,94,0.3)]"
+        title="Interrupt voice and stop speaking"
+      >
+        <span class="w-2 h-2 bg-rose-400 rounded-sm"></span>
+        <span>STOP</span>
+      </button>
+
+      <!-- Mute Toggle -->
+      <button 
+        type="button" 
+        id="voice-mute-btn" 
+        class="p-1.5 rounded bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700/80 text-xs font-mono-tech transition-colors cursor-pointer"
+        title="Toggle Audio Mute"
+      >
+        <svg id="mute-icon-unmuted" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        <svg id="mute-icon-muted" class="w-4 h-4 hidden text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
     </div>
   </div>
 
-  <!-- Terminal Chat Mock Area -->
+  <!-- Terminal Chat Area -->
   <div class="my-3 rounded-lg bg-[#070b14] border border-slate-800/80 p-3.5 space-y-3 font-mono-tech">
     <!-- Notice Banner -->
     <div class="flex items-start gap-2.5 p-2.5 rounded bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300">
@@ -52,7 +85,8 @@ const suggestedQuestions = [
         <line x1="12" y1="8" x2="12.01" y2="8"></line>
       </svg>
       <div>
-        <span class="text-cyan-400 font-semibold">GROUNDED NUMERICAL REASONING:</span> The AI Reasoning Copilot strictly ingests live CAN-bus telemetry, FFT vibration spectrums, and digital-twin residual vectors. Under Rule 26, the model never invents sensor numbers.
+        <span class="text-cyan-400 font-semibold">GROUNDED VOICE & NUMERICAL REASONING:</span> 
+        The AI Reasoning Copilot connects live engine telemetry, observer residuals, and isolated counterfactual simulations. Spoken summaries are generated via ElevenLabs (or browser fallback) while strictly adhering to Rule 26.
       </div>
     </div>
 
@@ -83,14 +117,32 @@ const suggestedQuestions = [
           <input 
             type="text" 
             id="ai-agent-input"
-            placeholder="Ask AI Copilot (e.g., 'What caused the vibration spike?', 'Explain health index')..."
+            placeholder="Ask AI Copilot (e.g., 'What caused the vibration spike?', 'Simulate 15% load increase')..."
             class="w-full px-3 py-2 text-xs bg-slate-950 text-slate-100 rounded-md border border-slate-700 font-mono-tech placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
           />
-          <div class="absolute right-2 top-2 text-[10px] text-emerald-400 font-bold">
-            ONLINE
+          <div class="absolute right-2 top-2 text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>READY</span>
           </div>
         </div>
         
+        <!-- Voice Input Mic Button -->
+        <button 
+          type="button" 
+          id="ai-mic-btn"
+          class="px-3 py-2 rounded-md bg-slate-900 hover:bg-cyan-950 text-cyan-400 border border-cyan-500/40 text-xs font-mono-tech font-bold transition-all flex items-center gap-1 cursor-pointer"
+          title="Speak your engineering question"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span id="ai-mic-text">TALK</span>
+        </button>
+
+        <!-- Submit Query Button -->
         <button 
           type="submit" 
           id="ai-send-btn"
@@ -108,13 +160,13 @@ const suggestedQuestions = [
       <div id="ai-query-feedback" class="mt-3 p-3 rounded-lg bg-[#050811] border border-cyan-500/30 text-xs text-slate-200 font-mono-tech space-y-2">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 text-[10px] text-slate-400">
           <span class="text-cyan-400 font-bold flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            AEROTWIN LOCAL COPILOT TERMINAL
+            <span id="terminal-pulse-dot" class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            AEROTWIN COPILOT TELEMETRY REASONING
           </span>
           <span id="ai-response-timestamp">STANDBY</span>
         </div>
         <div id="ai-terminal-content" class="text-slate-300 leading-relaxed">
-          Copilot initialized and synchronized with digital twin observer. Click a suggested query above or type a custom engineering question.
+          Copilot initialized and synchronized with digital twin observer. Click a suggested query above, type an engineering question, or click <strong class="text-cyan-400">TALK</strong> to use voice.
         </div>
       </div>
     </div>
@@ -122,8 +174,8 @@ const suggestedQuestions = [
 
   <!-- Footer Info -->
   <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-    <span>ENGINE COGNITION: LOCAL ENSEMBLE // MIL-STD-1553B TELEMETRY BUS</span>
-    <span class="text-emerald-400 font-bold">STATUS: OPERATIONAL (OFFLINE READY)</span>
+    <span>ENGINE COGNITION: ELEVENLABS STREAMING // LOCAL OLLAMA REASONER</span>
+    <span id="footer-agent-mode" class="text-emerald-400 font-bold">MODE: DUAL ENGINE (OFFLINE SAFE)</span>
   </div>
 </div>
 
@@ -135,43 +187,319 @@ const suggestedQuestions = [
   const inputEl = document.getElementById('ai-agent-input') as HTMLInputElement;
   const terminalContent = document.getElementById('ai-terminal-content');
   const timestampEl = document.getElementById('ai-response-timestamp');
+  const badgeEl = document.getElementById('voice-state-badge');
+  const badgeDot = document.getElementById('voice-state-dot');
+  const badgeText = document.getElementById('voice-state-text');
+  const bargeInBtn = document.getElementById('barge-in-btn');
+  const muteBtn = document.getElementById('voice-mute-btn');
+  const micBtn = document.getElementById('ai-mic-btn');
+  const micText = document.getElementById('ai-mic-text');
+  const muteUnmutedIcon = document.getElementById('mute-icon-unmuted');
+  const muteMutedIcon = document.getElementById('mute-icon-muted');
 
-  function handleQuery(queryText: string) {
+  // Internal voice state
+  let isMuted = false;
+  let isListening = false;
+  let currentAudio: HTMLAudioElement | null = null;
+  let recognition: any = null;
+
+  // Set Voice UI State
+  function setVoiceBadgeState(state: 'ready' | 'listening' | 'processing' | 'speaking') {
+    if (!badgeEl || !badgeDot || !badgeText) return;
+
+    badgeEl.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono-tech transition-all ';
+    badgeDot.className = 'w-2 h-2 rounded-full ';
+
+    if (state === 'ready') {
+      badgeEl.className += 'bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.15)]';
+      badgeDot.className += 'bg-emerald-400 animate-pulse';
+      badgeText.textContent = 'AI Copilot Ready';
+      if (bargeInBtn) bargeInBtn.classList.add('hidden');
+      if (bargeInBtn) bargeInBtn.classList.remove('flex');
+    } else if (state === 'listening') {
+      badgeEl.className += 'bg-amber-950/70 border border-amber-500/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]';
+      badgeDot.className += 'bg-amber-400 animate-ping';
+      badgeText.textContent = '🎙 Listening...';
+      if (bargeInBtn) bargeInBtn.classList.add('hidden');
+      if (bargeInBtn) bargeInBtn.classList.remove('flex');
+    } else if (state === 'processing') {
+      badgeEl.className += 'bg-cyan-950/70 border border-cyan-500/50 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]';
+      badgeDot.className += 'bg-cyan-400 animate-pulse';
+      badgeText.textContent = '⚙ Reasoning...';
+      if (bargeInBtn) bargeInBtn.classList.add('hidden');
+      if (bargeInBtn) bargeInBtn.classList.remove('flex');
+    } else if (state === 'speaking') {
+      badgeEl.className += 'bg-purple-950/70 border border-purple-500/50 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)]';
+      badgeDot.className += 'bg-purple-400 animate-pulse';
+      badgeText.textContent = '🔊 Speaking (TTS)';
+      if (bargeInBtn) bargeInBtn.classList.remove('hidden');
+      if (bargeInBtn) bargeInBtn.classList.add('flex');
+    }
+
+    // Dispatch global event for RealTimeStatusPanel
+    window.dispatchEvent(new CustomEvent('voice-state-changed', { detail: { state } }));
+  }
+
+  // Interrupt / Barge-In Audio
+  function stopSpeaking() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setVoiceBadgeState('ready');
+  }
+
+  // Speak Text (Streaming ElevenLabs Audio with Browser Fallback)
+  async function speakResponse(text: string) {
+    if (isMuted || !text) {
+      setVoiceBadgeState('ready');
+      return;
+    }
+
+    stopSpeaking();
+    setVoiceBadgeState('speaking');
+
+    try {
+      // Clean spoken text: extract [SPOKEN] section if present, or clean markdown
+      let cleanText = text;
+      const spokenMatch = text.match(/\[SPOKEN\]([\s\S]*?)(?:\[VISUAL\]|$)/i);
+      if (spokenMatch) {
+        cleanText = spokenMatch[1].trim();
+      } else {
+        cleanText = cleanText.replace(/\[VISUAL\][\s\S]*/i, '').trim();
+      }
+      cleanText = cleanText.replace(/[*#`_\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+
+      if (!cleanText) {
+        setVoiceBadgeState('ready');
+        return;
+      }
+
+      // Query ElevenLabs voice endpoint
+      const response = await fetch('/api/voice/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText }),
+      });
+
+      const contentType = response.headers.get('Content-Type') || '';
+      if (response.ok && contentType.includes('audio/mpeg')) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        currentAudio = audio;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          currentAudio = null;
+          setVoiceBadgeState('ready');
+        };
+
+        audio.onerror = () => {
+          fallbackSpeech(cleanText);
+        };
+
+        await audio.play();
+      } else {
+        fallbackSpeech(cleanText);
+      }
+    } catch {
+      fallbackSpeech(text);
+    }
+  }
+
+  // Browser SpeechSynthesis Fallback
+  function fallbackSpeech(text: string) {
+    if (isMuted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setVoiceBadgeState('ready');
+      return;
+    }
+
+    const clean = text.replace(/[*#`_\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setVoiceBadgeState('ready');
+    };
+    utterance.onerror = () => {
+      setVoiceBadgeState('ready');
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // Query Execution Handler
+  async function handleQuery(queryText: string) {
     if (!queryText || !queryText.trim()) return;
 
+    stopSpeaking();
     if (inputEl) inputEl.value = queryText;
     if (timestampEl) {
       const now = new Date();
       timestampEl.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' UTC';
     }
 
+    setVoiceBadgeState('processing');
+
     if (terminalContent) {
-      terminalContent.innerHTML = `<span class="text-cyan-400">Processing telemetry vector & observer residuals...</span>`;
-
-      setTimeout(() => {
-        const twin = simulator.getDigitalTwinState();
-        const tools = {
-          getCurrentEngineState: () => twin,
-          getRecentTelemetry: () => [],
-          getResiduals: () => twin.residuals,
-          getHealthIndex: () => twin.healthScore,
-          runCounterfactual: (inv: any) => simulator.runCounterfactual(inv),
-          generateEngineeringReport: () => `AeroTwin Telemetry Report: Health ${twin.healthScore}%, Status: ${twin.engineStatus}`
-        };
-
-        const reply = simulator.mockAI.askCopilot(queryText, tools);
-
-        terminalContent.innerHTML = `
-          <div class="text-[10px] text-cyan-400 font-bold mb-1">
-            QUERY: "${queryText}"
-          </div>
-          <div class="text-slate-200 bg-slate-900/60 p-2.5 rounded border border-slate-800 text-[11px] leading-relaxed">
-            ${reply}
-          </div>
-        `;
-      }, 150);
+      terminalContent.innerHTML = `<div class="flex items-center gap-2 text-cyan-400 py-1"><span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span><span>Grounding telemetry & evaluating tool calls...</span></div>`;
     }
+
+    let reply = '';
+    let spokenSummary = '';
+
+    try {
+      // First attempt server-side Ollama agent query
+      const response = await fetch('/api/agent/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        reply = data.text || data.visual || '';
+        spokenSummary = data.spoken || data.text || '';
+      }
+    } catch {
+      // Network or offline fallback
+    }
+
+    // If server query was empty or offline, run local in-memory Bayesian/rule copilot
+    if (!reply) {
+      const twin = simulator.getDigitalTwinState();
+      const tools = {
+        getCurrentEngineState: () => twin,
+        getRecentTelemetry: () => [twin.measured],
+        getResiduals: () => twin.residuals,
+        getHealthIndex: () => twin.healthScore,
+        runCounterfactual: (inv: any) => simulator.runCounterfactual(inv),
+        generateEngineeringReport: () => `AeroTwin Telemetry Report: Health ${twin.healthScore}%, Status: ${twin.engineStatus}`
+      };
+
+      // Check counterfactual query
+      const qLower = queryText.toLowerCase();
+      if (qLower.includes('simulate') && qLower.includes('load')) {
+        const cfResult = simulator.runCounterfactual({
+          name: 'Load Increase Simulation',
+          startStep: 0,
+          durationSteps: 20,
+          externalLoadMultiplier: 1.15
+        }, 20);
+
+        spokenSummary = `Counterfactual simulation complete. A 15 percent load increase produces a cylinder head temperature delta of ${cfResult.deltas.chtDelta_C.toFixed(1)} degrees Celsius.`;
+        reply = `[SIMULATION RESULT]\nSTATUS: Counterfactual Intervention Evaluated\nINTERVENTION: 15% Load Increase (20s)\nCHT DELTA: +${cfResult.deltas.chtDelta_C.toFixed(1)} °C\nEGT DELTA: +${cfResult.deltas.egtDelta_C.toFixed(1)} °C\nRISK: ${cfResult.riskAssessment}\nRECOMMENDATION: ${cfResult.recommendation}`;
+      } else {
+        reply = simulator.mockAI.askCopilot(queryText, tools);
+        spokenSummary = twin.activeFaultNames.length > 0 
+          ? `Warning: Engine anomaly detected: ${twin.activeFaultNames.join(', ')}. Health is at ${twin.healthScore} percent.`
+          : `Engine health is evaluated at ${twin.healthScore} percent under nominal cruise conditions.`;
+      }
+    }
+
+    // Render formatted response in terminal
+    if (terminalContent) {
+      const formattedReply = reply
+        .replace(/\n/g, '<br/>')
+        .replace(/\[SIMULATION RESULT\]/g, '<span class="text-purple-400 font-bold">[SIMULATION RESULT]</span>')
+        .replace(/\[GROUNDED OBSERVATION\]/g, '<span class="text-cyan-400 font-bold">[GROUNDED OBSERVATION]</span>')
+        .replace(/\[DIAGNOSTIC HYPOTHESIS\]/g, '<span class="text-amber-400 font-bold">[DIAGNOSTIC HYPOTHESIS]</span>')
+        .replace(/\[RECOMMENDED ACTION\]/g, '<span class="text-emerald-400 font-bold">[RECOMMENDED ACTION]</span>');
+
+      terminalContent.innerHTML = `
+        <div class="text-[10px] text-cyan-400 font-bold mb-1">
+          QUERY: "${queryText}"
+        </div>
+        <div class="text-slate-200 bg-slate-900/60 p-2.5 rounded border border-slate-800 text-[11px] leading-relaxed">
+          ${formattedReply}
+        </div>
+      `;
+    }
+
+    // Speak the response
+    speakResponse(spokenSummary || reply);
   }
+
+  // Setup Web Speech API Voice Input
+  function setupSpeechRecognition() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (micBtn) {
+        micBtn.title = 'Web Speech API not supported in this browser. Please type query.';
+      }
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isListening = true;
+      setVoiceBadgeState('listening');
+      if (micText) micText.textContent = 'LISTENING...';
+      if (micBtn) micBtn.classList.add('bg-amber-950', 'border-amber-400', 'text-amber-300');
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (inputEl) inputEl.value = transcript;
+      handleQuery(transcript);
+    };
+
+    recognition.onerror = () => {
+      isListening = false;
+      setVoiceBadgeState('ready');
+      if (micText) micText.textContent = 'TALK';
+      if (micBtn) micBtn.classList.remove('bg-amber-950', 'border-amber-400', 'text-amber-300');
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      if (micText) micText.textContent = 'TALK';
+      if (micBtn) micBtn.classList.remove('bg-amber-950', 'border-amber-400', 'text-amber-300');
+    };
+  }
+
+  // Event Listeners
+  bargeInBtn?.addEventListener('click', stopSpeaking);
+
+  muteBtn?.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (isMuted) {
+      stopSpeaking();
+      muteUnmutedIcon?.classList.add('hidden');
+      muteMutedIcon?.classList.remove('hidden');
+    } else {
+      muteUnmutedIcon?.classList.remove('hidden');
+      muteMutedIcon?.classList.add('hidden');
+    }
+  });
+
+  micBtn?.addEventListener('click', () => {
+    if (!recognition) setupSpeechRecognition();
+    if (recognition) {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        stopSpeaking();
+        try {
+          recognition.start();
+        } catch {
+          // ignore already started error
+        }
+      }
+    } else {
+      alert('Microphone speech recognition is not supported in this browser. You can type queries directly in the input box.');
+    }
+  });
 
   queryBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -188,4 +516,6 @@ const suggestedQuestions = [
       }
     });
   }
+
+  setupSpeechRecognition();
 </script>

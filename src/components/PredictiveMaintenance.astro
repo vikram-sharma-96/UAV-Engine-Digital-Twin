@@ -38,7 +38,7 @@ const { predictive } = initialEngineData;
         NEXT INSPECTION
       </div>
       <div class="my-1">
-        <div class="text-base sm:text-lg font-bold font-mono-tech text-slate-100">
+        <div id="pred-next-insp" class="text-base sm:text-lg font-bold font-mono-tech text-slate-100">
           {predictive.nextInspection}
         </div>
         <div class="text-[10px] text-emerald-400 font-mono-tech">
@@ -57,7 +57,7 @@ const { predictive } = initialEngineData;
         BEARING CONDITION
       </div>
       <div class="my-1">
-        <div class="text-base sm:text-lg font-bold font-mono-tech text-emerald-400 flex items-center gap-1.5">
+        <div id="pred-bearing-cond" class="text-base sm:text-lg font-bold font-mono-tech text-emerald-400 flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           {predictive.bearingCondition}
         </div>
@@ -77,7 +77,7 @@ const { predictive } = initialEngineData;
         COOLING SYSTEM
       </div>
       <div class="my-1">
-        <div class="text-base sm:text-lg font-bold font-mono-tech text-cyan-400 flex items-center gap-1.5">
+        <div id="pred-cooling-cond" class="text-base sm:text-lg font-bold font-mono-tech text-cyan-400 flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
           {predictive.coolingSystem}
         </div>
@@ -97,7 +97,7 @@ const { predictive } = initialEngineData;
         MAINTENANCE RISK
       </div>
       <div class="my-1">
-        <div class="text-base sm:text-lg font-bold font-mono-tech text-emerald-400 flex items-center gap-1.5">
+        <div id="pred-maint-risk" class="text-base sm:text-lg font-bold font-mono-tech text-emerald-400 flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           {predictive.maintenanceRisk}
         </div>
@@ -114,7 +114,47 @@ const { predictive } = initialEngineData;
   </div>
 
   <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-    <span>REMAINING USEFUL LIFE: <strong class="text-slate-200">320 HRS</strong> (OVERHAUL LIMIT 500 HRS)</span>
+    <span>REMAINING USEFUL LIFE: <strong id="pred-rul-val" class="text-slate-200">320 HRS</strong> (OVERHAUL LIMIT 500 HRS)</span>
     <span class="text-violet-400">ENSEMBLE LSTM PROGNOSTICS</span>
   </div>
 </div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  const brgCondition = document.getElementById('pred-bearing-cond');
+  const coolCondition = document.getElementById('pred-cooling-cond');
+  const maintRisk = document.getElementById('pred-maint-risk');
+  const nextInsp = document.getElementById('pred-next-insp');
+  const rulVal = document.getElementById('pred-rul-val');
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+    if (!s.predictive) return;
+
+    if (brgCondition) {
+      brgCondition.innerHTML = `<span class="w-2 h-2 rounded-full ${s.predictive.bearingColor === 'emerald' ? 'bg-emerald-400' : s.predictive.bearingColor === 'amber' ? 'bg-amber-400' : 'bg-rose-500'}"></span> ${s.predictive.bearingCondition}`;
+      brgCondition.className = `text-base sm:text-lg font-bold font-mono-tech ${s.predictive.bearingColor === 'emerald' ? 'text-emerald-400' : s.predictive.bearingColor === 'amber' ? 'text-amber-400' : 'text-rose-400'} flex items-center gap-1.5`;
+    }
+
+    if (coolCondition) {
+      coolCondition.innerHTML = `<span class="w-2 h-2 rounded-full ${s.predictive.coolingColor === 'cyan' ? 'bg-cyan-400' : s.predictive.coolingColor === 'amber' ? 'bg-amber-400' : 'bg-rose-500'}"></span> ${s.predictive.coolingSystem}`;
+      coolCondition.className = `text-base sm:text-lg font-bold font-mono-tech ${s.predictive.coolingColor === 'cyan' ? 'text-cyan-400' : s.predictive.coolingColor === 'amber' ? 'text-amber-400' : 'text-rose-400'} flex items-center gap-1.5`;
+    }
+
+    if (maintRisk) {
+      maintRisk.innerHTML = `<span class="w-2 h-2 rounded-full ${s.predictive.maintenanceColor === 'emerald' ? 'bg-emerald-400' : s.predictive.maintenanceColor === 'amber' ? 'bg-amber-400' : 'bg-rose-500'}"></span> ${s.predictive.maintenanceRisk}`;
+      maintRisk.className = `text-base sm:text-lg font-bold font-mono-tech ${s.predictive.maintenanceColor === 'emerald' ? 'text-emerald-400' : s.predictive.maintenanceColor === 'amber' ? 'text-amber-400' : 'text-rose-400'} flex items-center gap-1.5`;
+    }
+
+    if (nextInsp) {
+      nextInsp.textContent = `In ${s.predictive.nextInspectionHrs} Flight Hrs`;
+    }
+
+    if (rulVal) {
+      const remaining = Math.round(320 * (s.healthScore / 100));
+      rulVal.textContent = `${remaining} HRS`;
+    }
+  }) as EventListener);
+</script>
+

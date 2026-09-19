@@ -1,14 +1,17 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import MetricCards from '../components/MetricCards.astro';
-import MiniDigitalTwinPreview from '../components/MiniDigitalTwinPreview.astro';
-import FaultMonitoringPanel from '../components/FaultMonitoringPanel.astro';
-import RealTimeStatusPanel from '../components/RealTimeStatusPanel.astro';
+import Layout from '../../layouts/Layout.astro';
+import MetricCards from '../../components/MetricCards.astro';
+import MiniDigitalTwinPreview from '../../components/MiniDigitalTwinPreview.astro';
+import FaultMonitoringPanel from '../../components/FaultMonitoringPanel.astro';
+import RealTimeStatusPanel from '../../components/RealTimeStatusPanel.astro';
+import { initialEngineData } from '../../data/engineTelemetry';
+
+const { metrics } = initialEngineData;
 ---
 
 <Layout 
 	title="Overview | UAV Aero Engine Digital Twin" 
-	description="AI-Enabled Real-Time Digital Twin System for Health Monitoring & Fault Prediction"
+	description="High-level mission telemetry overview and engine status console"
 	activeRoute="/overview"
 >
 	<!-- Mission Banner -->

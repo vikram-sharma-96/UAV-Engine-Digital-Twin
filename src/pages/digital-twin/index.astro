@@ -1,0 +1,86 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import DigitalTwinViewer from '../../components/DigitalTwinViewer.astro';
+import MetricCards from '../../components/MetricCards.astro';
+---
+
+<Layout 
+	title="Digital Twin | UAV Aero Engine Digital Twin" 
+	description="Dedicated Real-Time CAD 3D Isometric UAV Engine Digital Twin Replica"
+	activeRoute="/digital-twin"
+>
+	<!-- Page Header Banner -->
+	<div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0a0f1e]/90 border border-slate-800/90 shadow-sm">
+		<div>
+			<div class="flex items-center gap-2">
+				<span class="text-xs font-mono-tech font-bold text-cyan-400 uppercase tracking-wider">
+					DIGITAL TWIN REPLICA CONSOLE
+				</span>
+				<span class="text-slate-600">|</span>
+				<span class="text-xs font-mono-tech text-slate-400">
+					4-CYLINDER BOXER AERO-PISTON
+				</span>
+			</div>
+			<h2 class="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+				Real-Time Synchronized CAD Isometric Engine Visualization
+			</h2>
+		</div>
+
+		<div class="flex items-center gap-2 text-xs font-mono-tech">
+			<span class="px-2.5 py-1 rounded bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 font-semibold flex items-center gap-1.5">
+				<span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+				STREAM SYNC: 1000 Hz
+			</span>
+			<span class="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400">
+				FOV: 45° ISOMETRIC
+			</span>
+		</div>
+	</div>
+
+	<!-- Live Telemetry Key Metric Summary Strip -->
+	<MetricCards />
+
+	<!-- Dedicated Expanded Digital Twin Visualization -->
+	<div class="w-full">
+		<DigitalTwinViewer />
+	</div>
+
+	<!-- Subsystem Hotspot Diagnostics Bar -->
+	<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono-tech text-xs">
+		<div class="p-3 rounded-lg bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<div class="text-[10px] text-slate-400 uppercase">CYLINDERS #1 - #4</div>
+			<div class="text-sm font-bold text-slate-200 mt-1 flex items-center justify-between">
+				<span>CHT DELTA-T</span>
+				<span class="text-emerald-400">2.1 °C</span>
+			</div>
+			<div class="text-[9px] text-slate-400 mt-1">COMBUSTION BALANCE: NOMINAL</div>
+		</div>
+
+		<div class="p-3 rounded-lg bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<div class="text-[10px] text-slate-400 uppercase">CRANKCASE & BEARINGS</div>
+			<div class="text-sm font-bold text-slate-200 mt-1 flex items-center justify-between">
+				<span>RADIAL PLAY</span>
+				<span class="text-cyan-400">0.012 mm</span>
+			</div>
+			<div class="text-[9px] text-slate-400 mt-1">MAIN JOURNAL: TOLERANCE OK</div>
+		</div>
+
+		<div class="p-3 rounded-lg bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<div class="text-[10px] text-slate-400 uppercase">LUBRICATION CIRCUIT</div>
+			<div class="text-sm font-bold text-slate-200 mt-1 flex items-center justify-between">
+				<span>SCAVENGE PUMP</span>
+				<span class="text-blue-400">ACTIVE</span>
+			</div>
+			<div class="text-[9px] text-slate-400 mt-1">OIL RETURN LINE: 4.3 BAR</div>
+		</div>
+
+		<div class="p-3 rounded-lg bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<div class="text-[10px] text-slate-400 uppercase">THERMAL DISSIPATION</div>
+			<div class="text-sm font-bold text-slate-200 mt-1 flex items-center justify-between">
+				<span>AIR-COOLED FINS</span>
+				<span class="text-teal-400">98.4% EFF</span>
+			</div>
+			<div class="text-[9px] text-slate-400 mt-1">RAM-AIR VELOCITY: 62 m/s</div>
+		</div>
+	</div>
+</Layout>

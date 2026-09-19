@@ -1,15 +1,20 @@
 ---
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Sidebar from '../components/Sidebar.astro';
+import SettingsDialog from '../components/SettingsDialog.astro';
 
 interface Props {
 	title?: string;
 	description?: string;
+	activeRoute?: string;
 }
 
 const { 
 	title = "AI Digital Twin | UAV Aero Piston Engines", 
-	description = "AI-Enabled Real-Time Digital Twin System for Health Monitoring & Fault Prediction" 
+	description = "AI-Enabled Real-Time Digital Twin System for Health Monitoring & Fault Prediction",
+	activeRoute
 } = Astro.props;
 ---
 
@@ -27,9 +32,62 @@ const {
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<!-- Astro ClientRouter for instant page transitions and persistent telemetry state -->
 		<ClientRouter />
 	</head>
 	<body class="bg-[#070a13] text-slate-100 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200 min-h-screen flex flex-col tech-grid-bg">
-		<slot />
+		
+		<!-- Persistent Avionics Header -->
+		<Header />
+
+		<!-- Main Ground-Control Frame: Sidebar + Dynamic Route Content -->
+		<div class="flex-1 flex flex-col lg:flex-row w-full min-h-[calc(100vh-65px)]">
+			
+			<!-- Persistent Telemetry Navigation Sidebar -->
+			<Sidebar activeRoute={activeRoute} />
+
+			<!-- Dedicated Page Viewport -->
+			<main class="flex-1 p-4 lg:p-6 space-y-5 overflow-x-hidden flex flex-col justify-between">
+				<div class="space-y-5 flex-1">
+					<slot />
+				</div>
+
+				<!-- Avionics Compliance Footer -->
+				<footer class="pt-4 mt-6 pb-2 border-t border-slate-800/80 text-[11px] font-mono-tech text-slate-500 flex flex-wrap items-center justify-between gap-3">
+					<div>
+						UAV AERO PISTON ENGINE DIGITAL TWIN &copy; 2026 // AVIONICS HEALTH MONITORING SPEC 4.2
+					</div>
+					<div class="flex items-center gap-4 text-slate-500">
+						<span>CAN-BUS: 1000 kBaud</span>
+						<span>FDIR PROTOCOL: MIL-STD-1553B COMPLIANT</span>
+						<span class="text-cyan-400 font-semibold">INTERFACE SYNCHRONIZED</span>
+					</div>
+				</footer>
+			</main>
+
+		</div>
+
+		<!-- Telemetry Settings Dialog -->
+		<SettingsDialog />
+
+		<!-- Global Simulator Auto-Start Script for Client Transitions -->
+		<script>
+			import { simulator } from '../data/engineSimulator';
+			// Ensure simulator is ticking and state is broadcast on page loads
+			if (!simulator.isRunning()) {
+				simulator.start();
+			} else {
+				// Broadcast state immediately on client router navigation
+				const currentState = simulator.getState();
+				document.dispatchEvent(new CustomEvent('engine-state-update', { detail: currentState }));
+			}
+
+			// Listen to astro:page-load to re-broadcast current state to newly mounted page components
+			document.addEventListener('astro:page-load', () => {
+				const currentState = simulator.getState();
+				document.dispatchEvent(new CustomEvent('engine-state-update', { detail: currentState }));
+			});
+		</script>
 	</body>
 </html>
+

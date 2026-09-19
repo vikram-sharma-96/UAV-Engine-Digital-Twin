@@ -1,0 +1,266 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout 
+	title="Maintenance & Inspection | UAV Aero Engine Digital Twin" 
+	description="Avionics Engine Maintenance Schedule, Component Lifecycle Tracking & FAA Service Logbook"
+	activeRoute="/maintenance"
+>
+	<!-- Page Header Banner -->
+	<div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0a0f1e]/90 border border-slate-800/90 shadow-sm">
+		<div>
+			<div class="flex items-center gap-2">
+				<span class="text-xs font-mono-tech font-bold text-blue-400 uppercase tracking-wider">
+					AVIONICS MAINTENANCE & LIFECYCLE MANAGEMENT
+				</span>
+				<span class="text-slate-600">|</span>
+				<span class="text-xs font-mono-tech text-slate-400">
+					FAA FAR 33.19 COMPLIANT LOGBOOK
+				</span>
+			</div>
+			<h2 class="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+				Scheduled Inspection Intervals, Component Wear Indices & Work Order History
+			</h2>
+		</div>
+
+		<div class="flex items-center gap-2 text-xs font-mono-tech">
+			<div class="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 flex items-center gap-1.5">
+				<span class="text-slate-500">AIRFRAME TIME:</span>
+				<span class="text-cyan-400 font-bold">142.8 HRS</span>
+			</div>
+			<div class="px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 font-bold">
+				CYCLE: PHASE B
+			</div>
+		</div>
+	</div>
+
+	<!-- Top Maintenance KPI Summary Cards -->
+	<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono-tech">
+		<div class="p-3.5 rounded-xl bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<span class="text-[10px] text-slate-400 uppercase">NEXT SERVICE DUE</span>
+			<div class="my-1.5">
+				<span class="text-2xl font-bold text-slate-100">150.0</span>
+				<span class="text-xs text-slate-400">HRS</span>
+			</div>
+			<div class="text-[10px] text-emerald-400 flex justify-between">
+				<span>REMAINING: 7.2 HRS</span>
+				<span>ROUTINE</span>
+			</div>
+		</div>
+
+		<div class="p-3.5 rounded-xl bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<span class="text-[10px] text-slate-400 uppercase">MAJOR OVERHAUL (TBO)</span>
+			<div class="my-1.5">
+				<span class="text-2xl font-bold text-cyan-400">500.0</span>
+				<span class="text-xs text-slate-400">HRS</span>
+			</div>
+			<div class="text-[10px] text-slate-400 flex justify-between">
+				<span>REMAINING: 357.2 HRS</span>
+				<span class="text-cyan-400">71.4% LIFE</span>
+			</div>
+		</div>
+
+		<div class="p-3.5 rounded-xl bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<span class="text-[10px] text-slate-400 uppercase">OPEN ACTION ITEMS</span>
+			<div class="my-1.5">
+				<span class="text-2xl font-bold text-amber-400">1</span>
+				<span class="text-xs text-slate-400">ADVISORY</span>
+			</div>
+			<div class="text-[10px] text-emerald-400 flex justify-between">
+				<span>0 URGENT / 0 CRITICAL</span>
+				<span>PASS</span>
+			</div>
+		</div>
+
+		<div class="p-3.5 rounded-xl bg-[#0a0f1d] border border-slate-800 flex flex-col justify-between">
+			<span class="text-[10px] text-slate-400 uppercase">OIL SAMPLE HEALTH</span>
+			<div class="my-1.5">
+				<span class="text-2xl font-bold text-emerald-400">CLEAN</span>
+				<span class="text-xs text-slate-400">SPECTRO</span>
+			</div>
+			<div class="text-[10px] text-slate-400 flex justify-between">
+				<span>FE: 4 ppm | CU: 2 ppm</span>
+				<span class="text-emerald-400">&lt; LIMIT</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main Maintenance Grid: Component Life & Inspection Checklist vs History Log -->
+	<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+		
+		<!-- Left: Component Condition & Inspection Schedule (6 cols) -->
+		<div class="lg:col-span-6 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+			<div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+				<div class="flex items-center gap-2">
+					<div class="p-1 rounded bg-blue-950/60 border border-blue-500/30 text-blue-400">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+							COMPONENT LIFECYCLE & WEAR ESTIMATE
+						</h3>
+						<p class="text-[10px] text-slate-400 font-mono-tech">
+							MEASURED DEGRADATION VS REPLACEMENT LIMITS
+						</p>
+					</div>
+				</div>
+				<span class="text-[10px] font-mono-tech text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/20">
+					5 MONITORED
+				</span>
+			</div>
+
+			<div class="space-y-3 my-3 font-mono-tech text-xs">
+				<div>
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300">Piston Rings & Cylinder Walls</span>
+						<div class="flex items-center gap-2">
+							<span class="text-slate-200 font-bold">86% LIFE</span>
+							<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">GOOD</span>
+						</div>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+						<div class="bg-emerald-400 h-full rounded-full" style="width: 86%"></div>
+					</div>
+				</div>
+
+				<div>
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300">Crankshaft Needle & Journal Bearings</span>
+						<div class="flex items-center gap-2">
+							<span class="text-slate-200 font-bold">78% LIFE</span>
+							<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">GOOD</span>
+						</div>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+						<div class="bg-emerald-400 h-full rounded-full" style="width: 78%"></div>
+					</div>
+				</div>
+
+				<div>
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300">Dual Spark Plugs (Ignition Circuit)</span>
+						<div class="flex items-center gap-2">
+							<span class="text-slate-200 font-bold">92% LIFE</span>
+							<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">EXCELLENT</span>
+						</div>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+						<div class="bg-emerald-400 h-full rounded-full" style="width: 92%"></div>
+					</div>
+				</div>
+
+				<div>
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300">Synthetic Lubrication Oil & Filter</span>
+						<div class="flex items-center gap-2">
+							<span class="text-slate-200 font-bold">64% LIFE</span>
+							<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30">SERVICE DUE SOON</span>
+						</div>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+						<div class="bg-amber-400 h-full rounded-full" style="width: 64%"></div>
+					</div>
+				</div>
+
+				<div>
+					<div class="flex items-center justify-between">
+						<span class="text-slate-300">Electronic Fuel Injection Nozzles</span>
+						<div class="flex items-center gap-2">
+							<span class="text-slate-200 font-bold">90% LIFE</span>
+							<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">GOOD</span>
+						</div>
+					</div>
+					<div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+						<div class="bg-emerald-400 h-full rounded-full" style="width: 90%"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+				<span>RECOMMENDED: OIL + FILTER CHANGE AT 150 HRS</span>
+				<span class="text-cyan-400">PART: UAV-OF-402</span>
+			</div>
+		</div>
+
+		<!-- Right: Maintenance Logbook & Service Records (6 cols) -->
+		<div class="lg:col-span-6 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+			<div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+				<div class="flex items-center gap-2">
+					<div class="p-1 rounded bg-slate-900 border border-slate-700 text-slate-300">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+							<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+							SERVICE LOGBOOK & WORK ORDERS
+						</h3>
+						<p class="text-[10px] text-slate-400 font-mono-tech">
+							DIGITALLY SIGNED AVIONICS RECORD
+						</p>
+					</div>
+				</div>
+				<span class="text-[10px] font-mono-tech text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+					4 ENTRIES
+				</span>
+			</div>
+
+			<div class="space-y-2 my-3 font-mono-tech text-xs max-h-[220px] overflow-y-auto pr-1">
+				<div class="p-2 rounded bg-slate-950/60 border border-slate-800/80">
+					<div class="flex items-center justify-between text-[11px]">
+						<span class="text-cyan-300 font-semibold">100-Hour Scheduled Line Inspection</span>
+						<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">COMPLETED</span>
+					</div>
+					<div class="text-[10px] text-slate-400 mt-1">
+						Replaced engine oil, spark plugs gapped to 0.55mm, valve clearance checked (0.15mm intake / 0.20mm exhaust).
+					</div>
+					<div class="flex items-center justify-between text-[9px] text-slate-500 mt-1 pt-1 border-t border-slate-800/40">
+						<span>HRS: 100.0</span>
+						<span>TECH: A&P #41920</span>
+						<span>DATE: 2026-08-14</span>
+					</div>
+				</div>
+
+				<div class="p-2 rounded bg-slate-950/60 border border-slate-800/80">
+					<div class="flex items-center justify-between text-[11px]">
+						<span class="text-cyan-300 font-semibold">50-Hour Routine Oil & Spectrographic Sample</span>
+						<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">COMPLETED</span>
+					</div>
+					<div class="text-[10px] text-slate-400 mt-1">
+						Oil drained, aero synthetic 20W-50 refilled (1.8 L), filter cut and inspected (no metallic particles).
+					</div>
+					<div class="flex items-center justify-between text-[9px] text-slate-500 mt-1 pt-1 border-t border-slate-800/40">
+						<span>HRS: 50.2</span>
+						<span>TECH: A&P #41920</span>
+						<span>DATE: 2026-07-02</span>
+					</div>
+				</div>
+
+				<div class="p-2 rounded bg-slate-950/60 border border-slate-800/80">
+					<div class="flex items-center justify-between text-[11px]">
+						<span class="text-cyan-300 font-semibold">Initial Acceptance & Dyno Calibration</span>
+						<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">COMPLETED</span>
+					</div>
+					<div class="text-[10px] text-slate-400 mt-1">
+						Pre-installation test bench run (5.0 hrs), compression verification: 155 psi all 4 cylinders.
+					</div>
+					<div class="flex items-center justify-between text-[9px] text-slate-500 mt-1 pt-1 border-t border-slate-800/40">
+						<span>HRS: 5.0</span>
+						<span>TECH: QA #1084</span>
+						<span>DATE: 2026-05-20</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+				<span>AIRWORTHINESS DIRECTIVES (AD): 0 PENDING</span>
+				<span class="text-emerald-400">STATUS: AIRWORTHY</span>
+			</div>
+		</div>
+
+	</div>
+</Layout>

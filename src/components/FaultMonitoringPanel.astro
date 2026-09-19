@@ -84,7 +84,139 @@ const { faults } = initialEngineData;
   </div>
 
   <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-    <span>DIAGNOSTIC ENGINE: LEVEL 2</span>
-    <span class="text-emerald-400">ISOLATION CONFIDENCE: 99.1%</span>
+    <div class="flex items-center gap-2">
+      <span>DIAGNOSTIC ENGINE: LEVEL 2</span>
+      <span class="text-slate-600">|</span>
+      <span id="fault-ml-badge" class="text-amber-400 flex items-center gap-1 font-semibold">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+        ML MODEL OFFLINE
+      </span>
+    </div>
+    <span class="text-emerald-400 font-semibold" id="fault-isolation-conf">ISOLATION CONFIDENCE: 99.1%</span>
   </div>
 </div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  const countPill = document.getElementById('faults-count-pill');
+  const statusText = document.getElementById('faults-status-text');
+  const severityBadge = document.getElementById('faults-severity-badge');
+  const eventsList = document.getElementById('events-list');
+  const isoConf = document.getElementById('fault-isolation-conf');
+  const mlBadge = document.getElementById('fault-ml-badge');
+
+  let lastKnownFault = 'None';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    const hasFault = s.activeFault !== 'None' && s.activeFault !== 'Normal';
+
+    // Count
+    if (countPill) {
+      countPill.textContent = hasFault ? '1' : '0';
+      countPill.className = hasFault ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold';
+    }
+
+    // Status text & dot
+    if (statusText) {
+      if (hasFault) {
+        statusText.innerHTML = `<span id="faults-pulse-dot" class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> ${s.activeFault.toUpperCase()}`;
+        statusText.className = 'text-sm font-bold font-mono-tech text-rose-400 flex items-center gap-2';
+      } else {
+        statusText.innerHTML = `<span id="faults-pulse-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span> ALL SYSTEMS NOMINAL`;
+        statusText.className = 'text-sm font-bold font-mono-tech text-emerald-400 flex items-center gap-2';
+      }
+    }
+
+    // Severity badge
+    if (severityBadge) {
+      if (s.engineStatus === 'HEALTHY') {
+        severityBadge.textContent = 'STATUS: NOMINAL';
+        severityBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30';
+      } else if (s.engineStatus === 'ADVISORY' || s.engineStatus === 'WARNING') {
+        severityBadge.textContent = `SEVERITY: ${s.engineStatus}`;
+        severityBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 animate-pulse';
+      } else {
+        severityBadge.textContent = `SEVERITY: CRITICAL`;
+        severityBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-rose-950/60 text-rose-300 border border-rose-500/30 animate-pulse';
+      }
+    }
+
+    // ML Status Badge & Confidence from Real Random Forest Model
+    if (mlBadge) {
+      if (s.mlStatus === 'ONLINE') {
+        mlBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ML MODEL: ONLINE (RF)';
+        mlBadge.className = 'text-emerald-400 flex items-center gap-1 font-semibold';
+      } else {
+        mlBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ML MODEL OFFLINE';
+        mlBadge.className = 'text-amber-400 flex items-center gap-1 font-semibold';
+      }
+    }
+
+    if (isoConf) {
+      const confPct = typeof s.mlConfidence === 'number' ? (s.mlConfidence * 100).toFixed(1) : '99.1';
+      isoConf.textContent = `ML CONFIDENCE: ${confPct}%`;
+      if (hasFault) {
+        isoConf.className = 'text-amber-400 font-bold';
+      } else {
+        isoConf.className = 'text-emerald-400 font-semibold';
+      }
+    }
+
+    // Prepend event if new fault detected
+    if (s.activeFault !== lastKnownFault && eventsList) {
+      lastKnownFault = s.activeFault;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const newEvt = document.createElement('div');
+      newEvt.className = 'event-item flex items-center justify-between p-2 rounded bg-slate-950/80 border border-cyan-500/30 text-xs font-mono-tech';
+
+      if (hasFault) {
+        newEvt.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
+            <span class="text-rose-300 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
+              ML FDIR: ${s.activeFault} classified (${typeof s.mlConfidence === 'number' ? (s.mlConfidence * 100).toFixed(0) : '99'}% conf)
+            </span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-[9px] text-rose-400 bg-rose-950/60 px-1 py-0.2 rounded border border-rose-500/30">
+              FAULT
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono-tech">
+              ${timeStr}
+            </span>
+          </div>
+        `;
+      } else {
+        newEvt.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+            <span class="text-emerald-300 text-[11px] truncate max-w-[220px] sm:max-w-[320px]">
+              ML Classification: Normal Operation nominal
+            </span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-[9px] text-emerald-400 bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-500/30">
+              NORMAL
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono-tech">
+              ${timeStr}
+            </span>
+          </div>
+        `;
+      }
+
+      eventsList.prepend(newEvt);
+      // Limit to 8 events in DOM
+      while (eventsList.children.length > 8) {
+        eventsList.removeChild(eventsList.lastChild!);
+      }
+    }
+  }) as EventListener);
+</script>
+
+

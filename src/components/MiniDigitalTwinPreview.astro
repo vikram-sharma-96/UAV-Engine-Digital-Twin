@@ -1,8 +1,9 @@
 ---
 // MiniDigitalTwinPreview.astro - Compact preview of the Digital Twin for Overview
+// Renders a high-fidelity 3D isometric wireframe engine schematic with live telemetry callouts
 ---
 
-<div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/30 p-4 shadow-sm flex flex-col justify-between h-full group hover:border-cyan-500/50 transition-all">
+<div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/30 p-4 shadow-sm flex flex-col justify-between h-full group hover:border-cyan-500/50 transition-all" id="mini-twin-root">
   <!-- Top Bar -->
   <div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
     <div class="flex items-center gap-2">
@@ -31,63 +32,361 @@
     </div>
   </div>
 
-  <!-- Central Mini Visual Representation -->
-  <div class="relative w-full h-[180px] my-3 rounded-lg bg-gradient-to-b from-[#080d1a] to-[#04070e] border border-slate-800/80 overflow-hidden flex items-center justify-center">
+  <!-- Central 3D Isometric Engine Viewport -->
+  <div class="relative w-full h-[280px] my-3 rounded-lg bg-gradient-to-b from-[#060a16] via-[#050812] to-[#03060c] border border-slate-800/80 overflow-hidden flex items-center justify-center">
     <!-- Grid BG -->
-    <div class="absolute inset-0 tech-grid-bg opacity-30 pointer-events-none"></div>
+    <div class="absolute inset-0 tech-grid-bg opacity-20 pointer-events-none"></div>
     
-    <!-- Mini SVG Isometric Schematic Preview -->
-    <svg class="w-4/5 h-4/5 max-h-[150px] drop-shadow-[0_0_15px_rgba(6,182,212,0.2)]" viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Radar sweep ambient glow -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-15">
+      <div class="w-[320px] h-[320px] rounded-full border border-cyan-500/20 mini-radar-sweep"></div>
+      <div class="w-[200px] h-[200px] rounded-full border border-dashed border-cyan-500/25 absolute"></div>
+    </div>
+
+    <!-- Corner HUD crop marks -->
+    <div class="absolute top-1.5 left-1.5 w-2.5 h-2.5 border-t border-l border-cyan-500/50 pointer-events-none"></div>
+    <div class="absolute top-1.5 right-1.5 w-2.5 h-2.5 border-t border-r border-cyan-500/50 pointer-events-none"></div>
+    <div class="absolute bottom-1.5 left-1.5 w-2.5 h-2.5 border-b border-l border-cyan-500/50 pointer-events-none"></div>
+    <div class="absolute bottom-1.5 right-1.5 w-2.5 h-2.5 border-b border-r border-cyan-500/50 pointer-events-none"></div>
+
+    <!-- ═══════════ HIGH-FIDELITY 3D ISOMETRIC SVG ENGINE ═══════════ -->
+    <svg class="w-full h-full max-h-[260px] drop-shadow-[0_0_20px_rgba(6,182,212,0.15)]" viewBox="0 0 700 460" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="miniCrankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#1e293b"/>
-          <stop offset="100%" stop-color="#090d16"/>
+        <!-- Engine body gradient -->
+        <linearGradient id="mCrankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1a253a"/>
+          <stop offset="50%" stop-color="#0d1525"/>
+          <stop offset="100%" stop-color="#070b14"/>
         </linearGradient>
-        <radialGradient id="miniCombustion" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+        <linearGradient id="mCylGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#0c1425"/>
+          <stop offset="30%" stop-color="#182540"/>
+          <stop offset="70%" stop-color="#182540"/>
+          <stop offset="100%" stop-color="#0c1425"/>
+        </linearGradient>
+        <linearGradient id="mPropGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.1"/>
+        </linearGradient>
+        <radialGradient id="mCombGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.7"/>
+          <stop offset="60%" stop-color="#0284c7" stop-opacity="0.15"/>
           <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
         </radialGradient>
+        <radialGradient id="mEngineAura" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="mGlow">
+          <feGaussianBlur stdDeviation="2" result="glow"/>
+          <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="mGlowStrong">
+          <feGaussianBlur stdDeviation="3.5" result="glow"/>
+          <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
 
-      <!-- Center Crankcase -->
-      <rect x="150" y="70" width="100" height="100" rx="12" fill="url(#miniCrankGrad)" stroke="#06b6d4" stroke-width="1.5"/>
-      <circle cx="200" cy="120" r="32" fill="#0b1120" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3 3"/>
-      
-      <!-- Rotating Crankshaft Animation -->
-      <g class="mini-crank-rot origin-[200px_120px]">
-        <circle cx="200" cy="120" r="14" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
-        <line x1="200" y1="120" x2="200" y2="100" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="200" cy="100" r="4" fill="#38bdf8"/>
-        <animateTransform attributeName="transform" type="rotate" from="0 200 120" to="360 200 120" dur="1.2s" repeatCount="indefinite" />
+      <!-- Ambient engine aura -->
+      <ellipse cx="350" cy="230" rx="200" ry="140" fill="url(#mEngineAura)"/>
+
+      <!-- Technical CAD center reference lines -->
+      <line x1="350" y1="50" x2="350" y2="410" stroke="#1a2744" stroke-dasharray="3 5" stroke-width="0.5"/>
+      <line x1="80" y1="230" x2="620" y2="230" stroke="#1a2744" stroke-dasharray="3 5" stroke-width="0.5"/>
+
+      <!-- ═══════════ PROPELLER HUB & SHAFT (TOP) ═══════════ -->
+      <g id="m-prop-assembly">
+        <!-- Propeller shaft -->
+        <rect x="336" y="50" width="28" height="55" rx="3" fill="#0c1525" stroke="#0ea5e9" stroke-width="1.5"/>
+        <!-- Propeller hub disc -->
+        <ellipse cx="350" cy="50" rx="42" ry="14" fill="#0c1525" stroke="#38bdf8" stroke-width="1.5"/>
+        <ellipse cx="350" cy="50" rx="28" ry="9" fill="none" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="2 2"/>
+        <!-- Propeller blade hints (isometric) -->
+        <path d="M 308 50 Q 270 30 240 20" stroke="#38bdf8" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M 392 50 Q 430 30 460 20" stroke="#38bdf8" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M 308 50 Q 280 70 260 80" stroke="#38bdf8" stroke-width="1" fill="none" opacity="0.3"/>
+        <path d="M 392 50 Q 420 70 440 80" stroke="#38bdf8" stroke-width="1" fill="none" opacity="0.3"/>
+        <!-- Hub center bolt -->
+        <circle cx="350" cy="50" r="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+        <!-- Spinner rotation indicator -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate" from="0 350 50" to="360 350 50" dur="3s" repeatCount="indefinite"/>
+          <circle cx="350" cy="42" r="2" fill="#38bdf8"/>
+        </g>
       </g>
 
-      <!-- Left Cylinder Bank (Cyl 1 & 3) -->
-      <rect x="50" y="85" width="90" height="70" rx="6" fill="#0e172a" stroke="#0ea5e9" stroke-width="1.5"/>
-      <line x1="70" y1="95" x2="70" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <line x1="90" y1="95" x2="90" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <line x1="110" y1="95" x2="110" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <circle cx="95" cy="120" r="16" fill="url(#miniCombustion)" class="animate-pulse"/>
-      <text x="75" y="105" fill="#64748b" font-family="monospace" font-size="9">CYL 1/3</text>
+      <!-- ═══════════ REDUCTION GEARBOX ═══════════ -->
+      <g id="m-gearbox">
+        <path d="M 315 105 L 315 130 Q 315 140 325 140 L 375 140 Q 385 140 385 130 L 385 105 Z" fill="#0d1525" stroke="#0ea5e9" stroke-width="1.5"/>
+        <!-- Gear teeth detail -->
+        <line x1="325" y1="108" x2="325" y2="138" stroke="#1e3a5f" stroke-width="1"/>
+        <line x1="340" y1="108" x2="340" y2="138" stroke="#1e3a5f" stroke-width="1"/>
+        <line x1="360" y1="108" x2="360" y2="138" stroke="#1e3a5f" stroke-width="1"/>
+        <line x1="375" y1="108" x2="375" y2="138" stroke="#1e3a5f" stroke-width="1"/>
+        <text x="350" y="128" text-anchor="middle" fill="#334155" font-family="monospace" font-size="7">RGBX</text>
+      </g>
 
-      <!-- Right Cylinder Bank (Cyl 2 & 4) -->
-      <rect x="260" y="85" width="90" height="70" rx="6" fill="#0e172a" stroke="#0ea5e9" stroke-width="1.5"/>
-      <line x1="280" y1="95" x2="280" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <line x1="300" y1="95" x2="300" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <line x1="320" y1="95" x2="320" y2="145" stroke="#334155" stroke-width="1.5"/>
-      <circle cx="305" cy="120" r="16" fill="url(#miniCombustion)" class="animate-pulse"/>
-      <text x="285" y="105" fill="#64748b" font-family="monospace" font-size="9">CYL 2/4</text>
+      <!-- ═══════════ CRANKCASE (CENTRAL HOUSING) ═══════════ -->
+      <g id="m-crankcase">
+        <!-- Main crankcase body - 3D isometric box -->
+        <path d="M 290 140 L 290 310 Q 290 325 305 325 L 395 325 Q 410 325 410 310 L 410 140 Q 410 130 395 130 L 305 130 Q 290 130 290 140 Z" fill="url(#mCrankGrad)" stroke="#38bdf8" stroke-width="1.8"/>
+        <!-- Inner case detail -->
+        <rect x="305" y="155" width="90" height="155" rx="8" fill="#060a14" stroke="#1e3a5f" stroke-width="1"/>
+        
+        <!-- Crankshaft main bearing housing -->
+        <circle cx="350" cy="230" r="50" fill="#0a0f1d" stroke="#0284c7" stroke-width="1.5"/>
+        <circle cx="350" cy="230" r="35" fill="#050912" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 3"/>
+        <circle cx="350" cy="230" r="22" fill="#080c16" stroke="#0ea5e9" stroke-width="1.5"/>
 
-      <!-- Propeller Hub Axis -->
-      <path d="M 200 40 L 200 70" stroke="#06b6d4" stroke-width="2" stroke-dasharray="2 2"/>
-      <polygon points="194,40 206,40 200,28" fill="#06b6d4"/>
+        <!-- Rotating crankshaft counterweight -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate" from="0 350 230" to="360 350 230" dur="2s" repeatCount="indefinite"/>
+          <circle cx="350" cy="212" r="8" fill="#38bdf8" fill-opacity="0.85" filter="url(#mGlow)"/>
+          <line x1="350" y1="230" x2="350" y2="212" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <line x1="338" y1="230" x2="362" y2="230" stroke="#0ea5e9" stroke-width="1.5"/>
+          <line x1="350" y1="218" x2="350" y2="242" stroke="#0ea5e9" stroke-width="1.5"/>
+        </g>
+
+        <!-- Sump bottom -->
+        <path d="M 310 325 Q 310 350 330 355 L 370 355 Q 390 350 390 325" fill="#0a0f1d" stroke="#0ea5e9" stroke-width="1.2"/>
+        <text x="350" y="348" text-anchor="middle" fill="#1e3a5f" font-family="monospace" font-size="7">SUMP</text>
+      </g>
+
+      <!-- ═══════════ LEFT CYLINDER BANK (CYL 1 & 3) ═══════════ -->
+      <g id="m-left-bank">
+        <!-- Cylinder 1 barrel -->
+        <rect x="115" y="175" width="175" height="55" rx="5" fill="url(#mCylGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+        <!-- Cylinder 3 barrel (lower, offset for isometric depth) -->
+        <rect x="125" y="250" width="165" height="55" rx="5" fill="url(#mCylGrad)" stroke="#0ea5e9" stroke-width="1.2" opacity="0.7"/>
+
+        <!-- Cooling fins Cyl 1 -->
+        <line x1="140" y1="165" x2="140" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="160" y1="165" x2="160" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="180" y1="165" x2="180" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="200" y1="165" x2="200" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="220" y1="165" x2="220" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="240" y1="165" x2="240" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="260" y1="165" x2="260" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+
+        <!-- Cooling fins Cyl 3 (dimmer for depth) -->
+        <line x1="150" y1="242" x2="150" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="170" y1="242" x2="170" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="190" y1="242" x2="190" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="210" y1="242" x2="210" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="230" y1="242" x2="230" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="250" y1="242" x2="250" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+
+        <!-- Cylinder head Left 1 (wedge) -->
+        <path d="M 115 175 L 80 185 L 80 225 L 115 230 Z" fill="#12203a" stroke="#38bdf8" stroke-width="1.5"/>
+        <!-- Cylinder head Left 3 -->
+        <path d="M 125 250 L 95 258 L 95 298 L 125 305 Z" fill="#0e1a30" stroke="#0ea5e9" stroke-width="1" opacity="0.6"/>
+
+        <!-- Spark plugs -->
+        <rect x="58" y="198" width="22" height="12" rx="2" fill="#0c1525" stroke="#38bdf8" stroke-width="1"/>
+        <line x1="58" y1="204" x2="40" y2="204" stroke="#f59e0b" stroke-width="2"/>
+        <rect x="74" y="270" width="20" height="10" rx="2" fill="#0c1525" stroke="#0ea5e9" stroke-width="0.8" opacity="0.5"/>
+        <line x1="74" y1="275" x2="58" y2="275" stroke="#f59e0b" stroke-width="1.5" opacity="0.5"/>
+
+        <!-- Combustion glow Cyl 1 -->
+        <circle cx="98" cy="202" r="20" fill="url(#mCombGlow)">
+          <animate attributeName="opacity" values="0.35;0.85;0.35" dur="1.2s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- Piston reciprocation Cyl 1 -->
+        <g>
+          <animateTransform attributeName="transform" type="translate" values="0,0; 18,0; 0,0" dur="1.2s" repeatCount="indefinite"/>
+          <rect x="132" y="183" width="38" height="40" rx="3" fill="#293548" stroke="#64748b" stroke-width="1.2"/>
+          <!-- Connecting rod -->
+          <line x1="170" y1="203" x2="305" y2="222" stroke="#475569" stroke-width="3.5" stroke-linecap="round"/>
+        </g>
+        <!-- Piston reciprocation Cyl 3 -->
+        <g opacity="0.55">
+          <animateTransform attributeName="transform" type="translate" values="18,0; 0,0; 18,0" dur="1.2s" repeatCount="indefinite"/>
+          <rect x="140" y="258" width="34" height="36" rx="3" fill="#1e2d42" stroke="#475569" stroke-width="1"/>
+          <line x1="174" y1="276" x2="305" y2="240" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- ═══════════ RIGHT CYLINDER BANK (CYL 2 & 4) ═══════════ -->
+      <g id="m-right-bank">
+        <!-- Cylinder 2 barrel -->
+        <rect x="410" y="175" width="175" height="55" rx="5" fill="url(#mCylGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+        <!-- Cylinder 4 barrel (lower offset) -->
+        <rect x="410" y="250" width="165" height="55" rx="5" fill="url(#mCylGrad)" stroke="#0ea5e9" stroke-width="1.2" opacity="0.7"/>
+
+        <!-- Cooling fins Cyl 2 -->
+        <line x1="440" y1="165" x2="440" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="460" y1="165" x2="460" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="480" y1="165" x2="480" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="500" y1="165" x2="500" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="520" y1="165" x2="520" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="540" y1="165" x2="540" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+        <line x1="560" y1="165" x2="560" y2="240" stroke="#38bdf8" stroke-width="1.2" opacity="0.6"/>
+
+        <!-- Cooling fins Cyl 4 (dimmer) -->
+        <line x1="440" y1="242" x2="440" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="460" y1="242" x2="460" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="480" y1="242" x2="480" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="500" y1="242" x2="500" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="520" y1="242" x2="520" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+        <line x1="540" y1="242" x2="540" y2="312" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+
+        <!-- Cylinder head Right 2 (wedge) -->
+        <path d="M 585 175 L 620 185 L 620 225 L 585 230 Z" fill="#12203a" stroke="#38bdf8" stroke-width="1.5"/>
+        <!-- Cylinder head Right 4 -->
+        <path d="M 575 250 L 605 258 L 605 298 L 575 305 Z" fill="#0e1a30" stroke="#0ea5e9" stroke-width="1" opacity="0.6"/>
+
+        <!-- Spark plugs right -->
+        <rect x="620" y="198" width="22" height="12" rx="2" fill="#0c1525" stroke="#38bdf8" stroke-width="1"/>
+        <line x1="642" y1="204" x2="660" y2="204" stroke="#f59e0b" stroke-width="2"/>
+        <rect x="605" y="270" width="20" height="10" rx="2" fill="#0c1525" stroke="#0ea5e9" stroke-width="0.8" opacity="0.5"/>
+        <line x1="625" y1="275" x2="642" y2="275" stroke="#f59e0b" stroke-width="1.5" opacity="0.5"/>
+
+        <!-- Combustion glow Cyl 2 -->
+        <circle cx="602" cy="202" r="20" fill="url(#mCombGlow)">
+          <animate attributeName="opacity" values="0.85;0.35;0.85" dur="1.2s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- Piston reciprocation Cyl 2 -->
+        <g>
+          <animateTransform attributeName="transform" type="translate" values="0,0; -18,0; 0,0" dur="1.2s" repeatCount="indefinite"/>
+          <rect x="530" y="183" width="38" height="40" rx="3" fill="#293548" stroke="#64748b" stroke-width="1.2"/>
+          <line x1="530" y1="203" x2="395" y2="222" stroke="#475569" stroke-width="3.5" stroke-linecap="round"/>
+        </g>
+        <!-- Piston reciprocation Cyl 4 -->
+        <g opacity="0.55">
+          <animateTransform attributeName="transform" type="translate" values="-18,0; 0,0; -18,0" dur="1.2s" repeatCount="indefinite"/>
+          <rect x="526" y="258" width="34" height="36" rx="3" fill="#1e2d42" stroke="#475569" stroke-width="1"/>
+          <line x1="526" y1="276" x2="395" y2="240" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+
+      <!-- ═══════════ EXHAUST MANIFOLD (BOTTOM) ═══════════ -->
+      <g id="m-exhaust">
+        <path d="M 95 230 Q 150 380 290 390 L 410 390 Q 550 380 605 230" stroke="#334155" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
+        <path d="M 95 290 Q 140 400 290 405 L 410 405 Q 560 400 605 290" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.35"/>
+        <!-- Exhaust collector -->
+        <path d="M 320 390 L 320 425 L 380 425 L 380 390" stroke="#334155" stroke-width="4" fill="#0a0f1d" opacity="0.6"/>
+        <text x="350" y="440" text-anchor="middle" fill="#1e3a5f" font-family="monospace" font-size="7">EXHAUST</text>
+      </g>
+
+      <!-- ═══════════ INTAKE / FUEL INJECTION RAIL (TOP) ═══════════ -->
+      <g id="m-intake">
+        <line x1="160" y1="150" x2="540" y2="150" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+        <!-- Injector nozzles -->
+        <circle cx="210" cy="150" r="3.5" fill="#38bdf8" opacity="0.7"/>
+        <circle cx="280" cy="150" r="3.5" fill="#38bdf8" opacity="0.7"/>
+        <circle cx="420" cy="150" r="3.5" fill="#38bdf8" opacity="0.7"/>
+        <circle cx="490" cy="150" r="3.5" fill="#38bdf8" opacity="0.7"/>
+        <!-- Throttle body -->
+        <rect x="335" y="140" width="30" height="20" rx="3" fill="#0c1525" stroke="#0ea5e9" stroke-width="1" opacity="0.6"/>
+      </g>
+
+      <!-- ═══════════ ACCESSORY DRIVE (OIL PUMP, ALTERNATOR) ═══════════ -->
+      <g id="m-accessories" opacity="0.45">
+        <!-- Oil pump -->
+        <rect x="300" y="360" width="40" height="20" rx="3" fill="#0c1525" stroke="#3b82f6" stroke-width="1"/>
+        <text x="320" y="374" text-anchor="middle" fill="#3b82f6" font-family="monospace" font-size="6">OIL P</text>
+        <!-- Alternator -->
+        <circle cx="400" cy="370" r="12" fill="#0a0f1d" stroke="#475569" stroke-width="1"/>
+        <text x="400" y="373" text-anchor="middle" fill="#475569" font-family="monospace" font-size="5">ALT</text>
+      </g>
+
+      <!-- ═══════════ SENSOR CALLOUT: ENGINE TEMP (Top-Left) ═══════════ -->
+      <g class="mini-sensor-node" filter="url(#mGlow)">
+        <polyline points="98,195 68,155 55,130" stroke="#10b981" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/>
+        <circle cx="98" cy="195" r="3" fill="#10b981"/>
+        <circle cx="98" cy="195" r="7" stroke="#10b981" stroke-width="1" fill="none" opacity="0.5">
+          <animate attributeName="r" values="3;10;3" dur="2.2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2.2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
+      <!-- ═══════════ SENSOR CALLOUT: RPM (Top-Center) ═══════════ -->
+      <g class="mini-sensor-node" filter="url(#mGlow)">
+        <polyline points="350,170 400,120 460,100" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/>
+        <circle cx="350" cy="170" r="3" fill="#06b6d4"/>
+        <circle cx="350" cy="170" r="7" stroke="#06b6d4" stroke-width="1" fill="none" opacity="0.5">
+          <animate attributeName="r" values="3;10;3" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
+      <!-- ═══════════ SENSOR CALLOUT: OIL PRESSURE (Bottom-Left) ═══════════ -->
+      <g class="mini-sensor-node" filter="url(#mGlow)">
+        <polyline points="320,340 240,375 180,385" stroke="#3b82f6" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/>
+        <circle cx="320" cy="340" r="3" fill="#3b82f6"/>
+        <circle cx="320" cy="340" r="7" stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.5">
+          <animate attributeName="r" values="3;10;3" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
+      <!-- ═══════════ SENSOR CALLOUT: VIBRATION (Bottom-Right) ═══════════ -->
+      <g class="mini-sensor-node" filter="url(#mGlow)">
+        <polyline points="400,280 480,350 540,370" stroke="#2dd4bf" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/>
+        <circle cx="400" cy="280" r="3" fill="#2dd4bf"/>
+        <circle cx="400" cy="280" r="7" stroke="#2dd4bf" stroke-width="1" fill="none" opacity="0.5">
+          <animate attributeName="r" values="3;10;3" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
     </svg>
 
-    <!-- Mini Live HUD Tags -->
-    <div class="absolute bottom-2 left-3 text-[10px] font-mono-tech text-slate-400">
-      <span class="text-slate-500">PROP SPEED:</span> <span id="mini-twin-rpm" class="text-cyan-400 font-bold">5,200 RPM</span>
+    <!-- ═══════════ 4 FLOATING TELEMETRY SENSOR BADGES ═══════════ -->
+    
+    <!-- TOP-LEFT: Engine Temp -->
+    <div class="absolute top-2 left-2 z-30 bg-[#0a1020]/90 border border-emerald-500/40 rounded-md px-2 py-1.5 backdrop-blur-md shadow-[0_0_10px_rgba(16,185,129,0.12)] flex flex-col min-w-[95px]">
+      <div class="flex items-center gap-1 text-[8px] font-mono-tech text-emerald-400 font-bold">
+        <span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+        ENGINE TEMP
+      </div>
+      <div class="flex items-baseline gap-0.5">
+        <span id="mini-twin-temp-val" class="text-base font-bold font-mono-tech text-slate-100">78</span>
+        <span class="text-[8px] text-emerald-300 font-mono-tech font-semibold">°C</span>
+      </div>
     </div>
-    <div class="absolute bottom-2 right-3 text-[10px] font-mono-tech text-slate-400 text-right">
-      <span class="text-slate-500">CHT:</span> <span id="mini-twin-temp" class="text-slate-200 font-bold">78 °C</span>
+
+    <!-- TOP-RIGHT: RPM -->
+    <div class="absolute top-2 right-2 z-30 bg-[#0a1020]/90 border border-cyan-500/40 rounded-md px-2 py-1.5 backdrop-blur-md shadow-[0_0_10px_rgba(6,182,212,0.12)] flex flex-col min-w-[95px] text-right">
+      <div class="flex items-center justify-end gap-1 text-[8px] font-mono-tech text-cyan-400 font-bold">
+        RPM
+        <span class="w-1 h-1 rounded-full bg-cyan-400 animate-pulse"></span>
+      </div>
+      <div class="flex items-baseline justify-end gap-0.5">
+        <span id="mini-twin-rpm-val" class="text-base font-bold font-mono-tech text-slate-100">5,200</span>
+      </div>
+    </div>
+
+    <!-- BOTTOM-LEFT: Oil Pressure -->
+    <div class="absolute bottom-8 left-2 z-30 bg-[#0a1020]/90 border border-blue-500/40 rounded-md px-2 py-1.5 backdrop-blur-md shadow-[0_0_10px_rgba(59,130,246,0.12)] flex flex-col min-w-[95px]">
+      <div class="flex items-center gap-1 text-[8px] font-mono-tech text-blue-400 font-bold">
+        <span class="w-1 h-1 rounded-full bg-blue-400 animate-pulse"></span>
+        OIL PRESSURE
+      </div>
+      <div class="flex items-baseline gap-0.5">
+        <span id="mini-twin-oil-val" class="text-base font-bold font-mono-tech text-slate-100">4.3</span>
+        <span class="text-[8px] text-blue-300 font-mono-tech font-semibold">bar</span>
+      </div>
+    </div>
+
+    <!-- BOTTOM-RIGHT: Vibration -->
+    <div class="absolute bottom-8 right-2 z-30 bg-[#0a1020]/90 border border-teal-500/40 rounded-md px-2 py-1.5 backdrop-blur-md shadow-[0_0_10px_rgba(45,212,191,0.12)] flex flex-col min-w-[95px] text-right">
+      <div class="flex items-center justify-end gap-1 text-[8px] font-mono-tech text-teal-400 font-bold">
+        VIBRATION
+        <span class="w-1 h-1 rounded-full bg-teal-400 animate-pulse"></span>
+      </div>
+      <div class="flex items-baseline justify-end gap-0.5">
+        <span id="mini-twin-vib-val" class="text-base font-bold font-mono-tech text-slate-100">1.2</span>
+        <span class="text-[8px] text-teal-300 font-mono-tech font-semibold">mm/s</span>
+      </div>
+    </div>
+
+    <!-- Bottom status HUD -->
+    <div class="absolute bottom-1 left-0 right-0 flex items-center justify-between px-3 text-[9px] font-mono-tech text-slate-500 z-20">
+      <span>PROP SPEED: <span id="mini-twin-rpm" class="text-cyan-400 font-bold">5,200 RPM</span></span>
+      <span>CHT: <span id="mini-twin-temp" class="text-slate-200 font-bold">78 °C</span></span>
     </div>
   </div>
 
@@ -108,17 +407,36 @@
   </div>
 </div>
 
+<style>
+  /* Radar sweep animation for background ambience */
+  .mini-radar-sweep {
+    animation: miniRadarSweep 6s linear infinite;
+  }
+  @keyframes miniRadarSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+
 <script>
   import type { EngineState } from '../data/engineSimulator';
 
   const miniStatus = document.getElementById('mini-twin-status');
   const miniRpm = document.getElementById('mini-twin-rpm');
   const miniTemp = document.getElementById('mini-twin-temp');
+  const miniRpmVal = document.getElementById('mini-twin-rpm-val');
+  const miniTempVal = document.getElementById('mini-twin-temp-val');
+  const miniOilVal = document.getElementById('mini-twin-oil-val');
+  const miniVibVal = document.getElementById('mini-twin-vib-val');
 
   document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
     const s = e.detail;
     if (miniRpm) miniRpm.textContent = `${s.rpm.toLocaleString()} RPM`;
     if (miniTemp) miniTemp.textContent = `${s.temperature} °C`;
+    if (miniRpmVal) miniRpmVal.textContent = s.rpm.toLocaleString();
+    if (miniTempVal) miniTempVal.textContent = String(s.temperature);
+    if (miniOilVal) miniOilVal.textContent = String(s.oilPressure);
+    if (miniVibVal) miniVibVal.textContent = String(s.vibration);
     if (miniStatus) {
       miniStatus.textContent = s.engineStatus;
       if (s.engineStatus === 'HEALTHY') {

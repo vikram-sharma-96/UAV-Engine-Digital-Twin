@@ -1,38 +1,52 @@
 /**
  * engineSimulator.ts
  * 
- * Centralized engine simulation engine for the UAV Digital Twin dashboard.
+ * Centralized Engine Simulation & Digital Twin Runtime for AeroTwin AI.
  * 
- * Architecture:
- * - Pure state machine with zero DOM dependencies.
- * - Each tick() call advances the simulation by one step (~1 second).
- * - State is broadcast via CustomEvent('engine-state-update') on `document`.
- * - Designed so the simulator can later be swapped for real sensor data
- *   arriving via WebSocket/API with minimal refactoring.
+ * Powered by:
+ * - Physics-informed mean-value engine model (intake, combustion, torque, thermal, lubrication, vibration)
+ * - True State vs Measured Transducer separation (noise, bias, drift, dropout)
+ * - Fault injection framework (progressive severity across 10 failure modes)
+ * - Parallel Digital Twin observer and real-time residual analysis
+ * - Seedable PRNG for scientific reproducibility
+ * 
+ * Preserves 100% backward-compatibility with all existing dashboard components:
+ * - Broadcasts CustomEvent('engine-state-update') on `document`
+ * - Maintains exact EngineState, ComponentScores, PredictiveState, and HistoryPoint shapes
+ * - Supports seamless scenario triggering ('normal', 'overheating', 'bearing', 'oilPressure', 'degradation')
  */
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+import type {
+  EngineConfig,
+  TrueEngineState,
+  MeasuredTelemetry,
+  TelemetryResiduals,
+  DigitalTwinState,
+  FaultId,
+  CounterfactualIntervention,
+  CounterfactualResult,
+} from '../engine/types.ts';
+
+import { DEFAULT_ENGINE_PROFILE } from '../engine/config/defaultEngineProfile.ts';
+import { PRNG } from '../engine/utils/prng.ts';
+import { AtmosphereModel } from '../engine/environment/atmosphere.ts';
+import { IntakeCombustionModel } from '../engine/physics/intakeCombustion.ts';
+import { EngineDynamicsModel } from '../engine/physics/dynamics.ts';
+import { ThermalModel, type ThermalState } from '../engine/physics/thermal.ts';
+import { LubricationModel } from '../engine/physics/lubrication.ts';
+import { VibrationModel } from '../engine/physics/vibration.ts';
+import { SensorTransducerModel } from '../engine/sensors/sensorTransducer.ts';
+import { FaultEngine } from '../engine/faults/faultEngine.ts';
+import { DigitalTwinEngine } from '../engine/twin/digitalTwinEngine.ts';
+import { CounterfactualEngine } from '../engine/counterfactual/counterfactualSim.ts';
+import { MockAIProvider } from '../engine/ai/mockAIProvider.ts';
+
+// ─── Public Types (Fully backward-compatible with existing UI) ────────────────
 
 export type SimulationMode = 'normal' | 'overheating' | 'bearing' | 'oilPressure' | 'degradation';
 
 export type EngineStatus = 'HEALTHY' | 'ADVISORY' | 'WARNING' | 'CRITICAL';
 export type FaultRisk = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
-
-export interface EngineState {
-  rpm: number;
-  temperature: number;
-  oilPressure: number;
-  vibration: number;
-  fuelFlow: number;
-  healthScore: number;
-  engineStatus: EngineStatus;
-  activeFault: string;
-  faultRisk: FaultRisk;
-  simulationMode: SimulationMode;
-  tickCount: number;
-  components: ComponentScores;
-  predictive: PredictiveState;
-}
 
 export interface ComponentScores {
   cylinder: number;
@@ -60,9 +74,33 @@ export interface HistoryPoint {
   oilPressure: number;
 }
 
-// ─── Normal Baseline ─────────────────────────────────────────────────────────
+export interface EngineState {
+  rpm: number;
+  temperature: number;
+  oilPressure: number;
+  vibration: number;
+  fuelFlow: number;
+  healthScore: number;
+  engineStatus: EngineStatus;
+  activeFault: string;
+  faultRisk: FaultRisk;
+  simulationMode: SimulationMode;
+  tickCount: number;
+  components: ComponentScores;
+  predictive: PredictiveState;
+  // Extended telemetry channels for advanced displays
+  exhaustGasTemp?: number;
+  manifoldAirPressure?: number;
+  torque_Nm?: number;
+  power_kW?: number;
+  residuals?: TelemetryResiduals;
+  altitude_m?: number;
+  airDensity?: number;
+}
 
-const NORMAL_BASELINE = {
+// ─── Presets and Baselines ───────────────────────────────────────────────────
+
+export const NORMAL_BASELINE = {
   rpm: 5200,
   temperature: 78,
   oilPressure: 4.3,
@@ -70,19 +108,7 @@ const NORMAL_BASELINE = {
   fuelFlow: 2.7,
 } as const;
 
-// ─── Scenario Target Profiles ────────────────────────────────────────────────
-
-interface ScenarioProfile {
-  rpm: number;
-  temperature: number;
-  oilPressure: number;
-  vibration: number;
-  fuelFlow: number;
-  activeFault: string;
-  faultLabel: string;
-}
-
-const SCENARIO_TARGETS: Record<SimulationMode, ScenarioProfile> = {
+export const SCENARIO_TARGETS: Record<SimulationMode, { rpm: number; temperature: number; oilPressure: number; vibration: number; fuelFlow: number; activeFault: string; faultLabel: string }> = {
   normal: {
     rpm: 5200,
     temperature: 78,
@@ -130,231 +156,361 @@ const SCENARIO_TARGETS: Record<SimulationMode, ScenarioProfile> = {
   },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Linear interpolation: move `current` toward `target` by factor `alpha` */
-function lerp(current: number, target: number, alpha: number): number {
-  return current + (target - current) * alpha;
+/** Compute health score from values (exposed for backward-compatibility) */
+export function computeHealthScore(state: { rpm: number; temperature: number; oilPressure: number; vibration: number; fuelFlow: number }): number {
+  const twin = new DigitalTwinEngine();
+  const res = twin.computeResiduals(
+    {
+      timestamp_ms: 0,
+      rpm: state.rpm,
+      manifoldPressure_bar: 0.95,
+      fuelFlow_L_h: state.fuelFlow,
+      cht_C: state.temperature,
+      egt_C: 640,
+      oilPressure_bar: state.oilPressure,
+      oilTemperature_C: 80,
+      vibration_mm_s: state.vibration,
+      alternatorVoltage_V: 14.2,
+      throttle_pct: 85,
+      engineLoad_pct: 82,
+      altitude_m: 2400,
+      ambientTemp_C: -0.6,
+      airDensity_kg_per_m3: 0.95,
+      torque_Nm: 115,
+      power_kW: 62.5,
+      sensorDropoutFlags: {},
+    },
+    twin.calculateExpectedState(0.85, 2400, -0.6)
+  );
+  return twin.evaluateHealth(res, {
+    timestamp_ms: 0,
+    rpm: state.rpm,
+    manifoldPressure_bar: 0.95,
+    fuelFlow_L_h: state.fuelFlow,
+    cht_C: state.temperature,
+    egt_C: 640,
+    oilPressure_bar: state.oilPressure,
+    oilTemperature_C: 80,
+    vibration_mm_s: state.vibration,
+    alternatorVoltage_V: 14.2,
+    throttle_pct: 85,
+    engineLoad_pct: 82,
+    altitude_m: 2400,
+    ambientTemp_C: -0.6,
+    airDensity_kg_per_m3: 0.95,
+    torque_Nm: 115,
+    power_kW: 62.5,
+    sensorDropoutFlags: {},
+  }).healthScore;
 }
 
-/** Gaussian-ish noise using Box-Muller (approximated) */
-function gaussianNoise(stddev: number): number {
-  const u1 = Math.random();
-  const u2 = Math.random();
-  const z = Math.sqrt(-2 * Math.log(u1 || 0.001)) * Math.cos(2 * Math.PI * u2);
-  return z * stddev;
-}
-
-/** Clamp a value between min and max */
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-/** Format current time as HH:MM:SS */
-function currentTimeStr(): string {
-  const now = new Date();
-  return now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-// ─── Health Score Computation ────────────────────────────────────────────────
-
-/**
- * Compute a dynamic health score based on deviation from normal baseline.
- * NOT hard-coded — calculated from live sensor values.
- * 
- * Weights: RPM (15%), Temperature (25%), Oil Pressure (25%), 
- *          Vibration (20%), Fuel Flow (15%)
- */
-function computeHealthScore(state: { rpm: number; temperature: number; oilPressure: number; vibration: number; fuelFlow: number }): number {
-  const rpmRange = 600;
-  const tempRange = 30;
-  const oilRange = 2.0;
-  const vibRange = 4.0;
-  const fuelRange = 1.5;
-
-  const rpmDeviation = Math.abs(state.rpm - NORMAL_BASELINE.rpm) / rpmRange;
-  const tempDeviation = Math.max(0, state.temperature - NORMAL_BASELINE.temperature) / tempRange;
-  const oilDeviation = Math.max(0, NORMAL_BASELINE.oilPressure - state.oilPressure) / oilRange;
-  const vibDeviation = Math.max(0, state.vibration - NORMAL_BASELINE.vibration) / vibRange;
-  const fuelDeviation = Math.abs(state.fuelFlow - NORMAL_BASELINE.fuelFlow) / fuelRange;
-
-  const penalty =
-    0.15 * clamp(rpmDeviation, 0, 1) +
-    0.25 * clamp(tempDeviation, 0, 1) +
-    0.25 * clamp(oilDeviation, 0, 1) +
-    0.20 * clamp(vibDeviation, 0, 1) +
-    0.15 * clamp(fuelDeviation, 0, 1);
-
-  const raw = 100 * (1 - penalty);
-  return Math.round(clamp(raw, 0, 100));
-}
-
-function deriveEngineStatus(healthScore: number): EngineStatus {
-  if (healthScore >= 90) return 'HEALTHY';
-  if (healthScore >= 75) return 'ADVISORY';
-  if (healthScore >= 60) return 'WARNING';
-  return 'CRITICAL';
-}
-
-function deriveFaultRisk(healthScore: number): FaultRisk {
-  if (healthScore >= 90) return 'LOW';
-  if (healthScore >= 75) return 'MODERATE';
-  if (healthScore >= 60) return 'HIGH';
-  return 'CRITICAL';
-}
-
-// ─── Component Health Derivation ─────────────────────────────────────────────
-
-function deriveComponentScores(state: { rpm: number; temperature: number; oilPressure: number; vibration: number; fuelFlow: number }): ComponentScores {
-  const cylTemp = clamp((state.temperature - 78) / 30, 0, 1);
-  const cylRpm = clamp(Math.abs(state.rpm - 5200) / 600, 0, 1);
-  const cylinder = Math.round(clamp(96 - cylTemp * 20 - cylRpm * 8, 30, 100));
-
-  const lubOil = clamp((4.3 - state.oilPressure) / 2.0, 0, 1);
-  const lubTemp = clamp((state.temperature - 78) / 35, 0, 1);
-  const lubrication = Math.round(clamp(92 - lubOil * 55 - lubTemp * 10, 20, 100));
-
-  const brgVib = clamp((state.vibration - 1.2) / 4.0, 0, 1);
-  const brgOil = clamp((4.3 - state.oilPressure) / 2.5, 0, 1);
-  const bearing = Math.round(clamp(94 - brgVib * 50 - brgOil * 15, 20, 100));
-
-  const coolTemp = clamp((state.temperature - 78) / 28, 0, 1);
-  const cooling = Math.round(clamp(95 - coolTemp * 42, 25, 100));
-
-  const fuelDev = clamp(Math.abs(state.fuelFlow - 2.7) / 1.5, 0, 1);
-  const fuelRpm = clamp(Math.abs(state.rpm - 5200) / 700, 0, 1);
-  const fuel = Math.round(clamp(93 - fuelDev * 28 - fuelRpm * 8, 30, 100));
-
-  return { cylinder, lubrication, bearing, cooling, fuel };
-}
-
-// ─── Predictive State Derivation ─────────────────────────────────────────────
-
-function derivePredictiveState(state: { vibration: number; temperature: number }, healthScore: number): PredictiveState {
-  let bearingCondition: string;
-  let bearingColor: 'emerald' | 'amber' | 'rose';
-  if (state.vibration <= 2.0) {
-    bearingCondition = 'Healthy';
-    bearingColor = 'emerald';
-  } else if (state.vibration <= 3.5) {
-    bearingCondition = 'Degraded';
-    bearingColor = 'amber';
-  } else {
-    bearingCondition = 'Critical';
-    bearingColor = 'rose';
-  }
-
-  let coolingSystem: string;
-  let coolingColor: 'cyan' | 'amber' | 'rose';
-  if (state.temperature <= 85) {
-    coolingSystem = 'Normal';
-    coolingColor = 'cyan';
-  } else if (state.temperature <= 95) {
-    coolingSystem = 'Stressed';
-    coolingColor = 'amber';
-  } else {
-    coolingSystem = 'Overloaded';
-    coolingColor = 'rose';
-  }
-
-  let maintenanceRisk: string;
-  let maintenanceColor: 'emerald' | 'amber' | 'rose';
-  if (healthScore >= 85) {
-    maintenanceRisk = 'Low';
-    maintenanceColor = 'emerald';
-  } else if (healthScore >= 65) {
-    maintenanceRisk = 'Moderate';
-    maintenanceColor = 'amber';
-  } else {
-    maintenanceRisk = 'High';
-    maintenanceColor = 'rose';
-  }
-
-  const nextInspectionHrs = Math.round(clamp(healthScore * 0.5, 5, 47));
-
-  return { bearingCondition, bearingColor, coolingSystem, coolingColor, maintenanceRisk, maintenanceColor, nextInspectionHrs };
-}
-
-// ─── Simulator Class ─────────────────────────────────────────────────────────
+// ─── Engine Simulator Class ──────────────────────────────────────────────────
 
 const MAX_HISTORY = 30;
-const LERP_ALPHA = 0.18;
-
 type StateCallback = (state: EngineState) => void;
 
-class EngineSimulator {
+export class EngineSimulator {
+  private config: EngineConfig = DEFAULT_ENGINE_PROFILE;
+  private prng: PRNG = new PRNG(42);
+  private faultEngine: FaultEngine = new FaultEngine();
+  private sensorTransducer: SensorTransducerModel = new SensorTransducerModel();
+  private twinEngine: DigitalTwinEngine = new DigitalTwinEngine();
+  public mockAI: MockAIProvider = new MockAIProvider();
+
   private currentMode: SimulationMode = 'normal';
-  private tickCount = 0;
+  private tickCount: number = 0;
+  private simTime_s: number = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private subscribers: Set<StateCallback> = new Set();
 
-  private rpm = NORMAL_BASELINE.rpm;
-  private temperature = NORMAL_BASELINE.temperature;
-  private oilPressure = NORMAL_BASELINE.oilPressure;
-  private vibration = NORMAL_BASELINE.vibration;
-  private fuelFlow = NORMAL_BASELINE.fuelFlow;
-
+  // Physics runtime state
+  private currentRpm: number = 5200;
+  private throttle: number = 0.82; // Nominal cruise throttle
+  private altitude_m: number = 2400; // 2,400m MSL cruise ceiling
+  private thermalState: ThermalState = ThermalModel.getBaselineState();
   private history: HistoryPoint[] = [];
 
+  // Cached latest outputs
+  private latestTrueState!: TrueEngineState;
+  private latestMeasured!: MeasuredTelemetry;
+  private latestTwinState!: DigitalTwinState;
+
   constructor() {
-    // Seed initial history with slight variation
-    for (let i = 0; i < 11; i++) {
+    this.initPhysics();
+    // Seed initial history
+    const now = new Date();
+    for (let i = 10; i >= 0; i--) {
+      const past = new Date(now.getTime() - i * 60000);
+      const timeStr = past.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       this.history.push({
-        time: `15:${String(i).padStart(2, '0')}`,
-        rpm: Math.round(5200 + gaussianNoise(10)),
-        temperature: parseFloat((78 + gaussianNoise(0.5)).toFixed(1)),
-        vibration: parseFloat((1.2 + gaussianNoise(0.05)).toFixed(1)),
-        oilPressure: parseFloat((4.3 + gaussianNoise(0.03)).toFixed(1)),
+        time: timeStr,
+        rpm: Math.round(5200 + this.prng.gaussian(0, 8)),
+        temperature: parseFloat((78 + this.prng.gaussian(0, 0.4)).toFixed(1)),
+        vibration: parseFloat((1.2 + this.prng.gaussian(0, 0.04)).toFixed(1)),
+        oilPressure: parseFloat((4.3 + this.prng.gaussian(0, 0.02)).toFixed(1)),
       });
     }
   }
 
-  /** Switch the active simulation scenario */
-  setScenario(mode: SimulationMode): void {
-    this.currentMode = mode;
-    this.tickCount = 0;
+  private initPhysics(): void {
+    const env = AtmosphereModel.calculate(this.altitude_m);
+    const combustion = IntakeCombustionModel.calculate(this.config, env, this.throttle, this.currentRpm);
+    const lub = LubricationModel.calculatePressure(this.currentRpm, this.thermalState.oilTemperature_K, this.config);
+    const vib = VibrationModel.calculate(this.currentRpm, 0.82, 0, 0, 0, this.prng);
+
+    this.latestTrueState = {
+      timestamp_s: 0,
+      rpm: this.currentRpm,
+      angularVelocity_rad_s: (this.currentRpm * 2 * Math.PI) / 60,
+      throttle: this.throttle,
+      engineLoad: 0.82,
+      manifoldPressure_Pa: combustion.manifoldPressure_Pa,
+      airMassFlow_kg_s: combustion.airMassFlow_kg_s,
+      fuelMassFlow_kg_s: combustion.fuelMassFlow_kg_s,
+      fuelConsumption_L_h: combustion.fuelConsumption_L_h,
+      actualAfr: combustion.effectiveAfr,
+      combustionEfficiency: combustion.volumetricEfficiency,
+      torque_Nm: combustion.brakeTorque_Nm,
+      brakePower_W: combustion.brakePower_W,
+      cht_K: this.thermalState.cht_K,
+      egt_K: this.thermalState.egt_K,
+      oilTemperature_K: this.thermalState.oilTemperature_K,
+      oilPressure_Pa: lub.oilPressure_Pa,
+      vibration_mm_s: vib.totalRms_mm_s,
+      alternatorVoltage_V: 14.2,
+      degradationIndex: 0,
+      activeFaults: [],
+      cylinderTemperatures_K: this.thermalState.cylinderTemperatures_K,
+    };
+
+    this.latestMeasured = this.sensorTransducer.measure(this.latestTrueState, env, 1.0, this.prng);
+    this.latestTwinState = this.twinEngine.synthesizeState(this.latestTrueState, this.latestMeasured);
+  }
+
+  /** Start simulation loop (or resume from sessionStorage) */
+  startAuto(): void {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedMode = sessionStorage.getItem('uav_sim_mode') as SimulationMode;
+        if (savedMode && SCENARIO_TARGETS[savedMode]) {
+          this.currentMode = savedMode;
+          this.applyModeFaults(savedMode);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
 
     if (!this.intervalId) {
       this.intervalId = setInterval(() => {
         this.tick();
       }, 1000);
+      if (typeof (this.intervalId as any)?.unref === 'function') {
+        (this.intervalId as any).unref();
+      }
     }
 
-    // Immediate first tick
+    const state = this.getState();
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('engine-state-update', { detail: state }));
+    }
+  }
+
+  /** Switch active simulation scenario and configure appropriate physical fault */
+  setScenario(mode: SimulationMode): void {
+    this.currentMode = mode;
+    this.tickCount = 0;
+
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('uav_sim_mode', mode);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    this.applyModeFaults(mode);
+
+    if (!this.intervalId) {
+      this.intervalId = setInterval(() => {
+        this.tick();
+      }, 1000);
+      if (typeof (this.intervalId as any)?.unref === 'function') {
+        (this.intervalId as any).unref();
+      }
+    }
+
     this.tick();
   }
 
-  /** Advance simulation by one step */
+  /** Map preset scenario modes to physical fault injection configurations */
+  private applyModeFaults(mode: SimulationMode): void {
+    this.faultEngine.clearAllFaults();
+
+    switch (mode) {
+      case 'normal':
+        this.faultEngine.clearAllFaults();
+        this.faultEngine.setDegradation(0.0);
+        break;
+
+      case 'overheating':
+        this.faultEngine.injectFault({
+          id: 'OVERHEATING',
+          name: 'Cooling Radiator Airflow Restriction',
+          description: 'Cylinder head and oil heat rejection compromised due to core blockage',
+          severity: 0.85,
+          targetSubsystem: 'COOLING',
+        });
+        break;
+
+      case 'bearing':
+        this.faultEngine.injectFault({
+          id: 'VIBRATION_FAULT',
+          name: 'Journal Bearing Spalling & Clearance Degrade',
+          description: 'High-frequency vibration harmonic anomaly on crankshaft main journal #2',
+          severity: 0.90,
+          targetSubsystem: 'BEARING',
+        });
+        break;
+
+      case 'oilPressure':
+        this.faultEngine.injectFault({
+          id: 'LUBRICATION_DEGRADATION',
+          name: 'Oil Pressure Relief Malfunction',
+          description: 'Severe pump cavitation / pressure relief valve leak',
+          severity: 0.82,
+          targetSubsystem: 'LUBRICATION',
+        });
+        break;
+
+      case 'degradation':
+        this.faultEngine.setDegradation(0.65);
+        this.faultEngine.injectFault({
+          id: 'INJECTOR_DEGRADATION',
+          name: 'Fuel Injector Nozzle Fouling',
+          description: 'Combustion asymmetry and specific fuel consumption degradation',
+          severity: 0.60,
+          targetSubsystem: 'FUEL',
+          targetCylinder: 2,
+        });
+        break;
+    }
+  }
+
+  /** Advance physical simulation by one second */
   tick(): void {
     this.tickCount++;
-    const target = SCENARIO_TARGETS[this.currentMode];
+    this.simTime_s += 1.0;
+    const dt = 1.0;
 
-    this.rpm = lerp(this.rpm, target.rpm, LERP_ALPHA) + gaussianNoise(8);
-    this.temperature = lerp(this.temperature, target.temperature, LERP_ALPHA) + gaussianNoise(0.3);
-    this.oilPressure = lerp(this.oilPressure, target.oilPressure, LERP_ALPHA) + gaussianNoise(0.02);
-    this.vibration = lerp(this.vibration, target.vibration, LERP_ALPHA) + gaussianNoise(0.04);
-    this.fuelFlow = lerp(this.fuelFlow, target.fuelFlow, LERP_ALPHA) + gaussianNoise(0.03);
+    // 1. Environmental calculations at altitude
+    const env = AtmosphereModel.calculate(this.altitude_m);
 
-    this.rpm = clamp(Math.round(this.rpm), 3000, 6500);
-    this.temperature = clamp(parseFloat(this.temperature.toFixed(1)), 40, 150);
-    this.oilPressure = clamp(parseFloat(this.oilPressure.toFixed(1)), 0.5, 6.0);
-    this.vibration = clamp(parseFloat(this.vibration.toFixed(1)), 0.3, 8.0);
-    this.fuelFlow = clamp(parseFloat(this.fuelFlow.toFixed(1)), 1.0, 6.0);
+    // 2. Evaluate active faults & degradation
+    const faultState = this.faultEngine.evaluate();
 
-    const point: HistoryPoint = {
-      time: currentTimeStr(),
-      rpm: this.rpm,
-      temperature: this.temperature,
-      vibration: this.vibration,
-      oilPressure: this.oilPressure,
+    // 3. Intake and combustion calculations
+    const combustion = IntakeCombustionModel.calculate(
+      this.config,
+      env,
+      this.throttle,
+      this.currentRpm,
+      faultState.afrMultiplier,
+      faultState.combustionEfficiencyMultiplier
+    );
+
+    // 4. Rotational dynamics
+    const dyn = EngineDynamicsModel.step(
+      this.currentRpm,
+      combustion.brakeTorque_Nm,
+      env.airDensity_kg_per_m3,
+      dt,
+      this.config,
+      1.0
+    );
+    this.currentRpm = dyn.nextRpm;
+
+    // 5. Thermal dynamic balance
+    this.thermalState = ThermalModel.step(
+      this.thermalState,
+      combustion.combustionHeatRate_W,
+      combustion.effectiveAfr,
+      this.currentRpm,
+      72.0, // UAV cruise airspeed in m/s (~140 knots)
+      env,
+      dt,
+      faultState.coolingEfficiencyMultiplier,
+      faultState.cylinderThermalImbalance
+    );
+
+    // 6. Lubrication pressure
+    const lub = LubricationModel.calculatePressure(
+      this.currentRpm,
+      this.thermalState.oilTemperature_K,
+      this.config,
+      faultState.oilPumpEfficiencyMultiplier
+    );
+
+    // 7. Physics-correlated vibration
+    const vib = VibrationModel.calculate(
+      this.currentRpm,
+      dyn.loadRatio,
+      faultState.bearingVibrationSeverity,
+      faultState.misfireSeverity,
+      faultState.progressiveDegradationIndex,
+      this.prng
+    );
+
+    // 8. Ground truth physical state
+    this.latestTrueState = {
+      timestamp_s: this.simTime_s,
+      rpm: this.currentRpm,
+      angularVelocity_rad_s: (this.currentRpm * 2 * Math.PI) / 60,
+      throttle: this.throttle,
+      engineLoad: dyn.loadRatio,
+      manifoldPressure_Pa: combustion.manifoldPressure_Pa,
+      airMassFlow_kg_s: combustion.airMassFlow_kg_s,
+      fuelMassFlow_kg_s: combustion.fuelMassFlow_kg_s,
+      fuelConsumption_L_h: combustion.fuelConsumption_L_h,
+      actualAfr: combustion.effectiveAfr,
+      combustionEfficiency: combustion.volumetricEfficiency,
+      torque_Nm: combustion.brakeTorque_Nm,
+      brakePower_W: combustion.brakePower_W,
+      cht_K: this.thermalState.cht_K,
+      egt_K: this.thermalState.egt_K,
+      oilTemperature_K: this.thermalState.oilTemperature_K,
+      oilPressure_Pa: lub.oilPressure_Pa,
+      vibration_mm_s: vib.totalRms_mm_s,
+      alternatorVoltage_V: 14.2,
+      degradationIndex: faultState.progressiveDegradationIndex,
+      activeFaults: faultState.activeFaultIds,
+      cylinderTemperatures_K: this.thermalState.cylinderTemperatures_K,
     };
-    this.history.push(point);
+
+    // 9. Measured transducer telemetry (True State -> Transducer -> Measured)
+    this.latestMeasured = this.sensorTransducer.measure(this.latestTrueState, env, dt, this.prng);
+
+    // 10. Digital Twin observer & residual synthesis
+    this.latestTwinState = this.twinEngine.synthesizeState(this.latestTrueState, this.latestMeasured);
+
+    // 11. Append to rolling historical buffer
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    this.history.push({
+      time: timeStr,
+      rpm: this.latestMeasured.rpm,
+      temperature: this.latestMeasured.cht_C,
+      vibration: this.latestMeasured.vibration_mm_s,
+      oilPressure: this.latestMeasured.oilPressure_bar,
+    });
     if (this.history.length > MAX_HISTORY) {
       this.history.shift();
     }
 
     const state = this.getState();
 
+    // Broadcast update via standard CustomEvent
     if (typeof document !== 'undefined') {
       document.dispatchEvent(new CustomEvent('engine-state-update', { detail: state }));
     }
@@ -364,47 +520,66 @@ class EngineSimulator {
     }
   }
 
-  /** Get current state snapshot */
+  /**
+   * Return EngineState matching the exact shape expected by existing UI components.
+   */
   getState(): EngineState {
-    const sensorValues = {
-      rpm: this.rpm,
-      temperature: this.temperature,
-      oilPressure: this.oilPressure,
-      vibration: this.vibration,
-      fuelFlow: this.fuelFlow,
-    };
-
-    const healthScore = computeHealthScore(sensorValues);
-    const engineStatus = deriveEngineStatus(healthScore);
-    const faultRisk = deriveFaultRisk(healthScore);
+    const twin = this.latestTwinState;
+    const meas = this.latestMeasured;
     const target = SCENARIO_TARGETS[this.currentMode];
-    const components = deriveComponentScores(sensorValues);
-    const predictive = derivePredictiveState(sensorValues, healthScore);
 
     return {
-      ...sensorValues,
-      healthScore,
-      engineStatus,
-      activeFault: target.activeFault,
-      faultRisk,
+      rpm: meas.rpm,
+      temperature: meas.cht_C,
+      oilPressure: meas.oilPressure_bar,
+      vibration: meas.vibration_mm_s,
+      fuelFlow: meas.fuelFlow_L_h,
+      healthScore: twin.healthScore,
+      engineStatus: twin.engineStatus,
+      activeFault: twin.activeFaultNames.length > 0 ? twin.activeFaultNames.join(', ') : target.activeFault,
+      faultRisk: twin.faultRisk,
       simulationMode: this.currentMode,
       tickCount: this.tickCount,
-      components,
-      predictive,
+      components: twin.subsystems,
+      predictive: twin.predictive,
+      // Extended channels
+      exhaustGasTemp: meas.egt_C,
+      manifoldAirPressure: meas.manifoldPressure_bar,
+      torque_Nm: meas.torque_Nm,
+      power_kW: meas.power_kW,
+      residuals: twin.residuals,
+      altitude_m: meas.altitude_m,
+      airDensity: meas.airDensity_kg_per_m3,
     };
   }
 
-  /** Get rolling chart history */
+  /** Get rolling historical chart samples */
   getHistory(): HistoryPoint[] {
     return [...this.history];
   }
 
-  /** Reset to normal operation */
+  /** Get underlying true ground-truth physical state */
+  getTrueState(): TrueEngineState {
+    return this.latestTrueState;
+  }
+
+  /** Get underlying Digital Twin observer state with residuals */
+  getDigitalTwinState(): DigitalTwinState {
+    return this.latestTwinState;
+  }
+
+  /** Run an isolated counterfactual "what-if" branch */
+  runCounterfactual(intervention: CounterfactualIntervention, steps: number = 20): CounterfactualResult {
+    const env = AtmosphereModel.calculate(this.altitude_m);
+    return CounterfactualEngine.evaluate(this.latestTrueState, env, intervention, steps, this.config);
+  }
+
+  /** Reset simulator to normal state */
   reset(): void {
     this.setScenario('normal');
   }
 
-  /** Subscribe to state changes */
+  /** Subscribe to state updates */
   subscribe(callback: StateCallback): () => void {
     this.subscribers.add(callback);
     return () => {
@@ -412,7 +587,7 @@ class EngineSimulator {
     };
   }
 
-  /** Stop the simulation loop */
+  /** Stop simulation loop */
   stop(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
@@ -420,15 +595,18 @@ class EngineSimulator {
     }
   }
 
-  /** Check if simulation is running */
+  /** Check running status */
   isRunning(): boolean {
     return this.intervalId !== null;
   }
 }
 
-// ─── Singleton Export ────────────────────────────────────────────────────────
-
-/** Global singleton — all dashboard panels share this one instance */
+// Global Singleton instance shared by all Astro pages and client components
 export const simulator = new EngineSimulator();
 
-export { NORMAL_BASELINE, SCENARIO_TARGETS, computeHealthScore };
+if (typeof window !== 'undefined') {
+  simulator.startAuto();
+  document.addEventListener('astro:page-load', () => {
+    simulator.startAuto();
+  });
+}

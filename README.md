@@ -193,38 +193,25 @@ Possible ML approaches include:
 
 ## 🛠️ Technology Stack
 
-### Frontend
+### Digital Twin & Simulation Engine
 
-* HTML
-* CSS
-* JavaScript
-* React *(if implemented)*
+* **Engine Model**: 0D/1D Mean-Value Engine Model (MVEM) with dynamic thermal inertia and fluid mechanics
+* **Digital Twin**: Parallel observer state estimation with real-time residual vector computation
+* **Fault Injection**: 10 failure modes with progressive severity ($0.0 \to 1.0$)
+* **Atmosphere**: International Standard Atmosphere (ISA) barometric and air density model
 
-### Backend
+### Frontend Dashboard
 
-* Python
-* FastAPI
+* **Framework**: Astro 5.x (`^7.3.2`) with `@tailwindcss/vite` (v4.3.3)
+* **Visualization**: Interactive isometric SVG 4-cylinder boxer engine schematic with real-time animated crankshaft
+* **Streaming**: Central state store broadcasting `engine-state-update` events
+* **Styling**: Modern dark aerospace HUD aesthetic with glassmorphism
 
-### AI / Machine Learning
+### AI / Machine Learning Ready
 
-* Python
-* Scikit-learn
-* Pandas
-* NumPy
-
-### Data Visualization
-
-* Chart.js / Recharts
-
-### Database
-
-* Supabase / PostgreSQL
-
-### Development
-
-* Git
-* GitHub
-* VS Code
+* **Dataset Generator**: Seedable PRNG with labeled CSV / JSON export
+* **ML Model Interface**: Decoupled prediction contract (`predict(window) -> MLPrediction`)
+* **Mock Provider**: Calibrated Bayesian residual inference and grounded LLM Copilot tools
 
 ---
 
@@ -232,14 +219,45 @@ Possible ML approaches include:
 
 ```text
 UAV-ENGINE-DIGITAL-TWIN/
-│
-├── frontend/
-│   ├── src/
-│   ├── components/
-│   ├── pages/
-│   └── assets/
-│
-├── backend/
-│   ├── main.py
-│   ├── r
+├── src/
+│   ├── engine/                    # Modular Physics & Digital Twin Core
+│   │   ├── config/                # Default engine profile and sensor specs
+│   │   ├── environment/           # ISA atmosphere equations (P, T, rho)
+│   │   ├── physics/               # Intake, dynamics, thermal, lubrication, vibration
+│   │   ├── sensors/               # Transducer pipeline (noise, bias, drift, dropout)
+│   │   ├── faults/                # Progressive fault injection engine (10 modes)
+│   │   ├── twin/                  # Digital twin observer and residual engine
+│   │   ├── counterfactual/        # What-if state cloner and forward simulator
+│   │   ├── mission/               # UAV flight regime sequencer
+│   │   ├── dataset/               # Synthetic dataset generator for ML training
+│   │   └── ai/                    # ML contract and deterministic mock AI provider
+│   ├── components/                # Astro dashboard components (SVG twin, metric cards)
+│   ├── data/                      # Central simulator singleton (engineSimulator.ts)
+│   ├── layouts/                   # Avionics dashboard shell (DashboardLayout.astro)
+│   └── pages/                     # 8 Avionics pages (/overview, /digital-twin, etc.)
+├── tests/                         # Automated unit & physical validation suite
+├── ENGINE_MODEL.md                # Full mathematical documentation of equations
+├── ARCHITECTURE.md                # System topology and modular design
+├── TELEMETRY_SCHEMA.md            # Transducer data dictionary
+├── FAULT_MODEL.md                 # Fault signatures and severity behavior
+├── DATASET_GENERATION.md          # Synthetic data generation instructions
+├── ML_INTEGRATION.md              # ML model provider integration guide
+├── VALIDATION.md                  # Physical plausibility benchmarks
+├── LOCAL_AI.md                    # Local LLM Copilot tools and safety rules
+└── DEVELOPER_SETUP.md             # Developer setup and quickstart guide
+```
+
+---
+
+## 🚀 Quickstart
+
+```powershell
+# 1. Run automated engineering tests
+node --test tests/*.test.ts
+
+# 2. Start local development server
+npm run dev
+
+# 3. Compile production bundle
+npm run build
 ```

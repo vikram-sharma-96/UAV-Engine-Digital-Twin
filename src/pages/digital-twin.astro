@@ -1,0 +1,94 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import DigitalTwinViewer from '../components/DigitalTwinViewer.astro';
+---
+
+<DashboardLayout 
+  title="Digital Twin Replica | UAV Aero Engine"
+  channelName="PHYSICAL-DIGITAL SYNCHRONIZED TWIN"
+  channelSubtitle="CAD-Accurate 4-Cylinder Boxer Engine Kinematic & Thermal Simulation Model"
+>
+  <!-- Operating Telemetry Indicators Ribbon -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 shrink-0">
+    
+    <!-- State -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">OPERATING STATE</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-emerald-400 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        CRUISE
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">REGIME: 2,400m MSL</div>
+    </div>
+
+    <!-- Live RPM -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">CRANKSHAFT TACH</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-cyan-400">
+        <span id="dt-ribbon-rpm">5,200</span> <span class="text-xs text-slate-400">RPM</span>
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">NOMINAL: 5,200</div>
+    </div>
+
+    <!-- Live Temp -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">HEAD TEMP (CHT-1)</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-slate-100">
+        <span id="dt-ribbon-temp">78.0</span> <span class="text-xs text-slate-400">°C</span>
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">LIMIT: &lt;95.0°C</div>
+    </div>
+
+    <!-- Live Oil -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">MAIN OIL PRESSURE</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-blue-400">
+        <span id="dt-ribbon-oil">4.3</span> <span class="text-xs text-slate-400">bar</span>
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">MIN: 2.5 bar</div>
+    </div>
+
+    <!-- Live Vib -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">BEARING VIBRATION</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-teal-400">
+        <span id="dt-ribbon-vib">1.2</span> <span class="text-xs text-slate-400">mm/s</span>
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">ALERT: &gt;2.5 mm/s</div>
+    </div>
+
+    <!-- Live Fuel -->
+    <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800 flex flex-col justify-between">
+      <div class="text-[10px] font-mono-tech text-slate-400">FUEL CONSUMPTION</div>
+      <div class="my-1 text-base font-bold font-mono-tech text-violet-400">
+        <span id="dt-ribbon-fuel">2.7</span> <span class="text-xs text-slate-400">g/s</span>
+      </div>
+      <div class="text-[9px] font-mono-tech text-slate-500">FLOW BALANCED</div>
+    </div>
+
+  </div>
+
+  <!-- Central Full-Sized Isometric Engine Digital Twin -->
+  <div class="flex-1 w-full">
+    <DigitalTwinViewer compact={false} />
+  </div>
+</DashboardLayout>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+    const elRpm = document.getElementById('dt-ribbon-rpm');
+    const elTemp = document.getElementById('dt-ribbon-temp');
+    const elOil = document.getElementById('dt-ribbon-oil');
+    const elVib = document.getElementById('dt-ribbon-vib');
+    const elFuel = document.getElementById('dt-ribbon-fuel');
+
+    if (elRpm) elRpm.textContent = s.rpm.toLocaleString();
+    if (elTemp) elTemp.textContent = String(s.temperature);
+    if (elOil) elOil.textContent = String(s.oilPressure);
+    if (elVib) elVib.textContent = String(s.vibration);
+    if (elFuel) elFuel.textContent = String(s.fuelFlow);
+  }) as EventListener);
+</script>

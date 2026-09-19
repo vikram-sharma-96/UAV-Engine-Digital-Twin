@@ -22,3 +22,21 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Windows desktop and system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Test output and coverage
+coverage/
+.nyc_output/
+
+# Generated runtime telemetry exports
+telemetry_*.csv
+dataset_*.csv
+*.csv.tmp
+
+# Tauri desktop build artifacts
+src-tauri/target/

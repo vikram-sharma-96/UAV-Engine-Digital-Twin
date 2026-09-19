@@ -1,0 +1,21 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import TelemetryCharts from '../components/TelemetryCharts.astro';
+import SensorTable from '../components/SensorTable.astro';
+import RealTimeStatusPanel from '../components/RealTimeStatusPanel.astro';
+---
+
+<DashboardLayout 
+  title="Sensor Telemetry Stream | UAV Aero Engine"
+  channelName="LIVE SENSOR TELEMETRY & HIGH-SPEED LOGGING"
+  channelSubtitle="Real-Time CAN-Bus 1 Mbps Telemetry Stream, Time-Series History Charts & Transducer Matrix"
+>
+  <!-- 1. Detailed Time-Series History Trend Charts (RPM, Temp, Vib, Oil) -->
+  <TelemetryCharts />
+
+  <!-- 2. Full Engineering Sensor Table Matrix -->
+  <SensorTable />
+
+  <!-- 3. Real-Time Hardware & Bus Diagnostics -->
+  <RealTimeStatusPanel />
+</DashboardLayout>

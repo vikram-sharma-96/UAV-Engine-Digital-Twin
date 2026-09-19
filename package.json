@@ -9,7 +9,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test tests/*.test.ts",
+    "server": "node scripts/server.ts",
+    "desktop": "node scripts/desktop.ts",
+    "benchmark": "node scripts/benchmark.ts",
+    "dataset": "node scripts/generate_dataset.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

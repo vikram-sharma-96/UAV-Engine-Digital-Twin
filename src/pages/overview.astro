@@ -1,0 +1,32 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import MetricCards from '../components/MetricCards.astro';
+import DigitalTwinViewer from '../components/DigitalTwinViewer.astro';
+import FaultMonitoringPanel from '../components/FaultMonitoringPanel.astro';
+import RealTimeStatusPanel from '../components/RealTimeStatusPanel.astro';
+---
+
+<DashboardLayout 
+  title="Mission Overview | UAV Engine Digital Twin"
+  channelName="MISSION OVERVIEW & TELEMETRY CONSOLE"
+  channelSubtitle="High-Level Engine Operations, Core Metrics & Rapid Anomaly Feeds"
+>
+  <!-- 1. Top 6 Realistic Engineering Metric Cards -->
+  <MetricCards />
+
+  <!-- 2. Split View: Small Digital Twin Preview + Live Alerts & Events -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <!-- Compact Digital Twin Schematic Preview (7 cols) -->
+    <div class="lg:col-span-7 flex flex-col">
+      <DigitalTwinViewer compact={true} />
+    </div>
+
+    <!-- Recent Telemetry Events & FDIR Status (5 cols) -->
+    <div class="lg:col-span-5 flex flex-col">
+      <FaultMonitoringPanel />
+    </div>
+  </div>
+
+  <!-- 3. Hardware Bus Status & Stream Diagnostics -->
+  <RealTimeStatusPanel />
+</DashboardLayout>

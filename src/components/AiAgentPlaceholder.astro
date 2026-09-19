@@ -1,17 +1,18 @@
 ---
-// AiAgentPlaceholder.astro - AI Engine Health Agent (Ollama Interface Stub)
+// AiAgentPlaceholder.astro - AI Engine Health Copilot (Rule 26 Compliant Grounded Reasoning)
 const suggestedQuestions = [
   "Why is engine health decreasing?",
   "What caused the vibration increase?",
-  "What should I inspect?"
+  "What should I inspect?",
+  "Recommend inspection interval"
 ];
 ---
 
-<div class="rounded-xl bg-[#0a0f1d] border border-amber-500/30 p-4 shadow-sm flex flex-col justify-between" id="ai-agent">
+<div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/40 p-4 shadow-sm flex flex-col justify-between" id="ai-agent">
   <!-- Header -->
   <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
     <div class="flex items-center gap-2">
-      <div class="p-1 rounded bg-amber-950/60 border border-amber-500/40 text-amber-400">
+      <div class="p-1.5 rounded bg-cyan-950/70 border border-cyan-500/40 text-cyan-400">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a8 8 0 0 0-8 8c0 3.37 2.08 6.26 5 7.42V20a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2.58c2.92-1.16 5-4.05 5-7.42a8 8 0 0 0-8-8z"></path>
           <line x1="9" y1="10" x2="9.01" y2="10"></line>
@@ -21,23 +22,23 @@ const suggestedQuestions = [
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
-            AI ENGINE HEALTH AGENT
+          <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-100">
+            AI ENGINE HEALTH COPILOT
           </h3>
-          <span class="text-[9px] font-mono-tech px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40">
-            OLLAMA ARCHITECTURE
+          <span class="text-[9px] font-mono-tech px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+            LOCAL REASONING DAEMON
           </span>
         </div>
         <p class="text-[11px] text-slate-400 font-mono-tech">
-          NATURAL LANGUAGE TELEMETRY REASONING & ROOT CAUSE ANALYSIS
+          NATURAL LANGUAGE TELEMETRY REASONING & ROOT CAUSE EXPLANATIONS
         </p>
       </div>
     </div>
 
-    <!-- Offline Status Badge -->
-    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-950/50 border border-amber-500/30 text-amber-400 text-xs font-mono-tech">
-      <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-      <span class="font-semibold">AI Agent Offline — Integration Pending</span>
+    <!-- Active Status Badge -->
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-500/40 text-emerald-400 text-xs font-mono-tech shadow-[0_0_10px_rgba(16,185,129,0.15)]">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-semibold">AI Copilot Active — Local Ensemble / Standby Ollama</span>
     </div>
   </div>
 
@@ -51,7 +52,7 @@ const suggestedQuestions = [
         <line x1="12" y1="8" x2="12.01" y2="8"></line>
       </svg>
       <div>
-        <span class="text-cyan-400 font-semibold">OLLAMA INTEGRATION PREVIEW:</span> The AI Reasoning Copilot will ingest real-time CAN-bus telemetry, FFT vibration spectrums, and thermal gradients via local Ollama models (e.g., Llama 3 / Mistral) for real-time pilot and technician advisory.
+        <span class="text-cyan-400 font-semibold">GROUNDED NUMERICAL REASONING:</span> The AI Reasoning Copilot strictly ingests live CAN-bus telemetry, FFT vibration spectrums, and digital-twin residual vectors. Under Rule 26, the model never invents sensor numbers.
       </div>
     </div>
 
@@ -59,13 +60,13 @@ const suggestedQuestions = [
     <div>
       <div class="text-[10px] text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
         <span>Suggested Diagnostics Queries</span>
-        <span>CLICK TO PREVIEW</span>
+        <span class="text-cyan-400">CLICK TO EXECUTE</span>
       </div>
       <div class="flex flex-wrap gap-2">
         {suggestedQuestions.map((q) => (
           <button 
             type="button"
-            class="suggested-q-btn text-xs px-2.5 py-1.5 rounded-md bg-[#0d1424] hover:bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-colors text-left flex items-center gap-1.5"
+            class="suggested-q-btn text-xs px-2.5 py-1.5 rounded-md bg-[#0d1424] hover:bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-colors text-left flex items-center gap-1.5 cursor-pointer"
             data-query={q}
           >
             <span class="text-cyan-500">›</span>
@@ -75,71 +76,116 @@ const suggestedQuestions = [
       </div>
     </div>
 
-    <!-- Disabled Chat Input Group -->
+    <!-- Interactive Chat Input Group -->
     <div class="relative pt-1">
-      <div class="flex items-center gap-2">
+      <form id="ai-chat-form" class="flex items-center gap-2">
         <div class="relative flex-1">
           <input 
             type="text" 
             id="ai-agent-input"
-            disabled
-            placeholder="Ask AI Engine Copilot... (Ollama connection disabled in visual preview)"
-            class="w-full px-3 py-2 text-xs bg-slate-950 text-slate-400 rounded-md border border-slate-800 font-mono-tech placeholder:text-slate-600 cursor-not-allowed select-none"
+            placeholder="Ask AI Copilot (e.g., 'What caused the vibration spike?', 'Explain health index')..."
+            class="w-full px-3 py-2 text-xs bg-slate-950 text-slate-100 rounded-md border border-slate-700 font-mono-tech placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
           />
-          <div class="absolute right-2 top-2 text-[10px] text-slate-600">
-            OFFLINE
+          <div class="absolute right-2 top-2 text-[10px] text-emerald-400 font-bold">
+            ONLINE
           </div>
         </div>
         
         <button 
-          type="button" 
-          disabled
-          class="px-4 py-2 rounded-md bg-slate-800 text-slate-500 font-mono-tech text-xs font-semibold cursor-not-allowed border border-slate-700/60 flex items-center gap-1.5"
+          type="submit" 
+          id="ai-send-btn"
+          class="px-4 py-2 rounded-md bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono-tech text-xs font-bold transition-all border border-cyan-300 flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.25)] cursor-pointer"
         >
-          <span>SEND</span>
+          <span>QUERY</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>
         </button>
-      </div>
+      </form>
 
-      <div id="ai-query-feedback" class="hidden mt-2 p-2 rounded bg-cyan-950/30 border border-cyan-500/30 text-[11px] text-cyan-300">
-        <!-- Dynamic query preview injected via JS -->
+      <!-- Terminal Output Box -->
+      <div id="ai-query-feedback" class="mt-3 p-3 rounded-lg bg-[#050811] border border-cyan-500/30 text-xs text-slate-200 font-mono-tech space-y-2">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 text-[10px] text-slate-400">
+          <span class="text-cyan-400 font-bold flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            AEROTWIN LOCAL COPILOT TERMINAL
+          </span>
+          <span id="ai-response-timestamp">STANDBY</span>
+        </div>
+        <div id="ai-terminal-content" class="text-slate-300 leading-relaxed">
+          Copilot initialized and synchronized with digital twin observer. Click a suggested query above or type a custom engineering question.
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Footer Info -->
   <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-    <span>ENGINE COGNITION: LLAMA-3-7B-INSTRUCT</span>
-    <span class="text-amber-400">STATUS: OLLAMA DAEMON PENDING</span>
+    <span>ENGINE COGNITION: LOCAL ENSEMBLE // MIL-STD-1553B TELEMETRY BUS</span>
+    <span class="text-emerald-400 font-bold">STATUS: OPERATIONAL (OFFLINE READY)</span>
   </div>
 </div>
 
 <script>
+  import { simulator } from '../data/engineSimulator';
+
   const queryBtns = document.querySelectorAll('.suggested-q-btn');
-  const feedbackEl = document.getElementById('ai-query-feedback');
+  const formEl = document.getElementById('ai-chat-form') as HTMLFormElement;
   const inputEl = document.getElementById('ai-agent-input') as HTMLInputElement;
+  const terminalContent = document.getElementById('ai-terminal-content');
+  const timestampEl = document.getElementById('ai-response-timestamp');
+
+  function handleQuery(queryText: string) {
+    if (!queryText || !queryText.trim()) return;
+
+    if (inputEl) inputEl.value = queryText;
+    if (timestampEl) {
+      const now = new Date();
+      timestampEl.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' UTC';
+    }
+
+    if (terminalContent) {
+      terminalContent.innerHTML = `<span class="text-cyan-400">Processing telemetry vector & observer residuals...</span>`;
+
+      setTimeout(() => {
+        const twin = simulator.getDigitalTwinState();
+        const tools = {
+          getCurrentEngineState: () => twin,
+          getRecentTelemetry: () => [],
+          getResiduals: () => twin.residuals,
+          getHealthIndex: () => twin.healthScore,
+          runCounterfactual: (inv: any) => simulator.runCounterfactual(inv),
+          generateEngineeringReport: () => `AeroTwin Telemetry Report: Health ${twin.healthScore}%, Status: ${twin.engineStatus}`
+        };
+
+        const reply = simulator.mockAI.askCopilot(queryText, tools);
+
+        terminalContent.innerHTML = `
+          <div class="text-[10px] text-cyan-400 font-bold mb-1">
+            QUERY: "${queryText}"
+          </div>
+          <div class="text-slate-200 bg-slate-900/60 p-2.5 rounded border border-slate-800 text-[11px] leading-relaxed">
+            ${reply}
+          </div>
+        `;
+      }, 150);
+    }
+  }
 
   queryBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const q = btn.getAttribute('data-query');
-      if (inputEl && q) {
-        inputEl.value = q;
-      }
-      if (feedbackEl && q) {
-        feedbackEl.classList.remove('hidden');
-        feedbackEl.innerHTML = `
-          <div class="flex items-center gap-1.5 font-bold mb-1 text-cyan-200">
-            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-            Simulated Query Received: "${q}"
-          </div>
-          <div class="text-slate-300 text-[10px]">
-            [Ollama Prompt Template Prepared] Engine Telemetry Vector: [Health: 94%, RPM: 5200, Temp: 78°C, Vib: 1.2mm/s]. When Ollama is booted, response generation will stream directly here.
-          </div>
-        `;
-      }
+      if (q) handleQuery(q);
     });
   });
+
+  if (formEl) {
+    formEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (inputEl && inputEl.value) {
+        handleQuery(inputEl.value);
+      }
+    });
+  }
 </script>

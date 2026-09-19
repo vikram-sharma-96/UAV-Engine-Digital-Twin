@@ -1,0 +1,352 @@
+---
+// HealthSubsystems.astro - Dedicated Subsystem Cards for Engine Health page
+---
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-mono-tech font-bold uppercase tracking-wider text-cyan-400">
+        SUBSYSTEM MULTI-SENSOR KALMAN REASONING
+      </span>
+      <span class="text-slate-600">|</span>
+      <span class="text-[11px] font-mono-tech text-slate-400">5 CRITICAL DOMAINS</span>
+    </div>
+    <span class="text-[10px] font-mono-tech text-slate-400">
+      HEALTH THRESHOLD: &gt; 80% NOMINAL
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    
+    <!-- 1. CYLINDER SYSTEM -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+              <line x1="8" y1="6" x2="16" y2="6"></line>
+              <line x1="8" y1="10" x2="16" y2="10"></line>
+              <line x1="8" y1="14" x2="16" y2="14"></line>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">CYLINDER SYSTEM</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">4-CYL BOXER TOP END</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="sub-cyl-score" class="text-lg font-bold font-mono-tech text-emerald-400">96%</div>
+          <span id="sub-cyl-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-mono-tech">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Compression Balance:</span>
+          <span class="text-slate-200 font-semibold">9.8:1 NOMINAL</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Combustion Stability:</span>
+          <span class="text-cyan-400 font-semibold">99.4%</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Spark Advance:</span>
+          <span class="text-slate-300 font-semibold">28.0° BTDC</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sub-cyl-bar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 96%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>THERMAL DRIFT: 0.2°C/m</span>
+        <span class="text-emerald-400">EQUALIZED</span>
+      </div>
+    </div>
+
+    <!-- 2. BEARING SYSTEM -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">BEARING SYSTEM</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">CRANK JOURNAL & RODS</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="sub-brg-score" class="text-lg font-bold font-mono-tech text-emerald-400">94%</div>
+          <span id="sub-brg-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-mono-tech">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Vibration Harmonics:</span>
+          <span id="sub-brg-harmonics" class="text-teal-400 font-semibold">1.2 mm/s RMS</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Roller Acoustic Signature:</span>
+          <span class="text-slate-200 font-semibold">0.03 (LOW)</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Fatigue Index:</span>
+          <span class="text-emerald-400 font-semibold">0.04 / 1.00</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sub-brg-bar" class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 94%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>CLEARANCE TOLERANCE:</span>
+        <span class="text-slate-300">0.028 mm OK</span>
+      </div>
+    </div>
+
+    <!-- 3. COOLING SYSTEM -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-blue-950/60 border border-blue-500/30 text-blue-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">COOLING SYSTEM</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">RADIATOR & AIR SHROUD</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="sub-cool-score" class="text-lg font-bold font-mono-tech text-cyan-400">95%</div>
+          <span id="sub-cool-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/50 text-cyan-300 border border-cyan-500/30 font-mono-tech">OPTIMAL</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Core Coolant Flow:</span>
+          <span class="text-cyan-400 font-semibold">14.2 L/min</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Radiator Delta-T:</span>
+          <span class="text-slate-200 font-semibold">18.4°C</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Thermal Efficiency:</span>
+          <span class="text-emerald-400 font-semibold">97.2%</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sub-cool-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500" style="width: 95%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>THERMOSTAT VALVE:</span>
+        <span class="text-cyan-400">OPEN 82%</span>
+      </div>
+    </div>
+
+    <!-- 4. LUBRICATION SYSTEM -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-amber-950/60 border border-amber-500/30 text-amber-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2v6h6"></path>
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <path d="M4 12l8-8 8 8"></path>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">LUBRICATION SYSTEM</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">SCAVENGE PUMP & SUMP</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="sub-lub-score" class="text-lg font-bold font-mono-tech text-emerald-400">92%</div>
+          <span id="sub-lub-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-mono-tech">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Oil Line Pressure:</span>
+          <span id="sub-lub-press" class="text-blue-400 font-semibold">4.3 bar</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Oil Viscosity Index:</span>
+          <span class="text-slate-200 font-semibold">15W-50 SYNTH</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Filter Differential:</span>
+          <span class="text-emerald-400 font-semibold">0.12 bar (CLEAN)</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sub-lub-bar" class="bg-gradient-to-r from-amber-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>AERATION RATIO: &lt;1.2%</span>
+        <span class="text-emerald-400">PRESSURE STABLE</span>
+      </div>
+    </div>
+
+    <!-- 5. FUEL SYSTEM -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-violet-950/60 border border-violet-500/30 text-violet-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">FUEL SYSTEM</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">PORT INJECTION & RAIL</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="sub-fuel-score" class="text-lg font-bold font-mono-tech text-emerald-400">93%</div>
+          <span id="sub-fuel-badge" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-mono-tech">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Fuel Mass Flow:</span>
+          <span id="sub-fuel-flow" class="text-violet-400 font-semibold">2.7 g/s</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Rail Pressure:</span>
+          <span class="text-slate-200 font-semibold">3.85 bar</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Air-Fuel Lambda (λ):</span>
+          <span class="text-emerald-400 font-semibold">0.985 (STOICH)</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div id="sub-fuel-bar" class="bg-gradient-to-r from-violet-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 93%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>PULSE DURATION: 4.8 ms</span>
+        <span class="text-emerald-400">FLOW BALANCED</span>
+      </div>
+    </div>
+
+    <!-- 6. KALMAN ESTIMATOR SUMMARY -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-cyan-500/30 p-4 flex flex-col justify-between hover:border-cyan-500/60 transition-colors">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold font-mono-tech text-slate-200">FUSION ESTIMATOR</h4>
+            <span class="text-[10px] text-slate-400 font-mono-tech">EXTENDED KALMAN FILTER</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-lg font-bold font-mono-tech text-cyan-400">LEVEL 2</div>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/50 text-cyan-300 border border-cyan-500/30 font-mono-tech">ONLINE</span>
+        </div>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">State Vector:</span>
+          <span class="text-cyan-400 font-semibold">[RPM, CHT, OIL-P, VIB]</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Covariance Trace:</span>
+          <span class="text-emerald-400 font-semibold">0.0028 (STABLE)</span>
+        </div>
+        <div class="flex justify-between text-[11px]">
+          <span class="text-slate-400">Residual Innovation:</span>
+          <span class="text-slate-200 font-semibold">&lt;0.05 σ</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-gradient-to-r from-cyan-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 98%"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>INNOVATION BOUND: &lt;3σ</span>
+        <span class="text-cyan-400">CONVERGED</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+    const comps = s.components;
+
+    const updateComp = (scoreId: string, barId: string, badgeId: string, score: number) => {
+      const elScore = document.getElementById(scoreId);
+      const elBar = document.getElementById(barId);
+      const elBadge = document.getElementById(badgeId);
+
+      if (elScore) {
+        elScore.textContent = `${score}%`;
+        if (score < 60) elScore.className = 'text-lg font-bold font-mono-tech text-rose-400';
+        else if (score < 80) elScore.className = 'text-lg font-bold font-mono-tech text-amber-400';
+        else elScore.className = 'text-lg font-bold font-mono-tech text-emerald-400';
+      }
+
+      if (elBar) {
+        elBar.style.width = `${score}%`;
+        if (score < 60) elBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500';
+        else if (score < 80) elBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500';
+        else elBar.className = 'bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500';
+      }
+
+      if (elBadge) {
+        if (score < 60) {
+          elBadge.className = 'text-[9px] px-1.5 py-0.2 rounded bg-rose-950/50 text-rose-300 border border-rose-500/30 font-mono-tech';
+          elBadge.textContent = 'CRITICAL';
+        } else if (score < 80) {
+          elBadge.className = 'text-[9px] px-1.5 py-0.2 rounded bg-amber-950/50 text-amber-300 border border-amber-500/30 font-mono-tech';
+          elBadge.textContent = 'DEGRADED';
+        } else {
+          elBadge.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-300 border border-emerald-500/30 font-mono-tech';
+          elBadge.textContent = 'NOMINAL';
+        }
+      }
+    };
+
+    updateComp('sub-cyl-score', 'sub-cyl-bar', 'sub-cyl-badge', comps.cylinder);
+    updateComp('sub-brg-score', 'sub-brg-bar', 'sub-brg-badge', comps.bearing);
+    updateComp('sub-cool-score', 'sub-cool-bar', 'sub-cool-badge', comps.cooling);
+    updateComp('sub-lub-score', 'sub-lub-bar', 'sub-lub-badge', comps.lubrication);
+    updateComp('sub-fuel-score', 'sub-fuel-bar', 'sub-fuel-badge', comps.fuel);
+
+    // Live specific readings
+    const elVib = document.getElementById('sub-brg-harmonics');
+    if (elVib) elVib.textContent = `${s.vibration} mm/s RMS`;
+
+    const elPress = document.getElementById('sub-lub-press');
+    if (elPress) elPress.textContent = `${s.oilPressure} bar`;
+
+    const elFlow = document.getElementById('sub-fuel-flow');
+    if (elFlow) elFlow.textContent = `${s.fuelFlow} g/s`;
+  }) as EventListener);
+</script>

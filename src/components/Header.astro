@@ -6,9 +6,9 @@
   <div class="flex items-center justify-between gap-4">
     
     <!-- Left: Logo & Project Title -->
-    <div class="flex items-center gap-3.5">
+    <a href="/overview" class="flex items-center gap-3.5 group cursor-pointer focus:outline-none">
       <!-- Aerospace Turbine/Propeller Icon -->
-      <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] group">
+      <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] group-hover:border-cyan-400/60 transition-colors">
         <svg class="w-5 h-5 text-cyan-400 group-hover:rotate-90 transition-transform duration-700 ease-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 2v4"></path>
@@ -28,7 +28,7 @@
 
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-base lg:text-lg font-bold tracking-wider text-slate-100 uppercase font-mono-tech flex items-center gap-1.5">
+          <h1 class="text-base lg:text-lg font-bold tracking-wider text-slate-100 uppercase font-mono-tech flex items-center gap-1.5 group-hover:text-cyan-200 transition-colors">
             UAV DIGITAL TWIN
             <span class="text-[10px] font-normal px-1.5 py-0.5 rounded bg-cyan-950/70 text-cyan-400 border border-cyan-500/30 tracking-normal">
               PT-900 X1
@@ -42,7 +42,7 @@
           <span class="hidden sm:inline text-slate-500 font-mono-tech text-[10px]">AERO PISTON 4-CYL BOXER</span>
         </p>
       </div>
-    </div>
+    </a>
 
     <!-- Center: Live Simulation Badge & Subtitle highlight (hidden on small mobile) -->
     <div class="hidden md:flex items-center gap-3">

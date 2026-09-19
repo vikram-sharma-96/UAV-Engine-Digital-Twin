@@ -1,0 +1,363 @@
+---
+// PrognosticsDashboard.astro - AI-Driven Prognostics & Remaining Useful Life (RUL)
+interface PredictedFault {
+  id: string;
+  name: string;
+  subsystem: string;
+  probability: number;
+  timeToImpact: string;
+  severity: "LOW" | "ELEVATED" | "CRITICAL";
+  leadTimeHrs: number;
+}
+
+const predictedFaults: PredictedFault[] = [
+  { id: "PRED-01", name: "Bearing Race Micro-Spalling", subsystem: "Kinematics / Bearings", probability: 14, timeToImpact: "~72 FLIGHT HRS", severity: "LOW", leadTimeHrs: 72 },
+  { id: "PRED-02", name: "Thermal Exchanger Scale Buildup", subsystem: "Cooling Radiator", probability: 8, timeToImpact: "~120 FLIGHT HRS", severity: "LOW", leadTimeHrs: 120 },
+  { id: "PRED-03", name: "Oil Viscosity Shear Degradation", subsystem: "Lubrication", probability: 22, timeToImpact: "~48 FLIGHT HRS", severity: "ELEVATED", leadTimeHrs: 48 },
+  { id: "PRED-04", name: "Injector Nozzle Carbon Coking", subsystem: "Fuel Delivery", probability: 5, timeToImpact: "~180 FLIGHT HRS", severity: "LOW", leadTimeHrs: 180 }
+];
+
+const predictionHistory = [
+  { time: "15:10:00 UTC", model: "LSTM-PROGNOS-v4", metric: "Vib Harmonic Drift", prediction: "Bearing state nominal (0.02% drift/hr)", confidence: "99.4%" },
+  { time: "14:40:00 UTC", model: "KALMAN-FILT-v2", metric: "CHT Thermal Slope", prediction: "Cooling dissipation stable (97.2%)", confidence: "98.8%" },
+  { time: "14:10:00 UTC", model: "XGB-REMAIN-LIFE", metric: "Composite Health", prediction: "RUL re-estimated at 357.2 hrs", confidence: "97.6%" },
+  { time: "13:40:00 UTC", model: "LSTM-PROGNOS-v4", metric: "Oil Pressure Delta", prediction: "Pump volumetric efficiency 96.4%", confidence: "99.1%" }
+];
+---
+
+<div class="space-y-5">
+  
+  <!-- 1. Top 4 Prognostic Summary KPI Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    
+    <!-- KPI 1: Failure Risk Indicator -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-violet-500/40 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech text-slate-400">
+        <span>FAILURE RISK INDEX</span>
+        <span id="prog-risk-badge" class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+          LOW RISK
+        </span>
+      </div>
+      <div class="my-2 flex items-baseline gap-1.5">
+        <span id="prog-risk-val" class="text-2xl lg:text-3xl font-bold font-mono-tech text-emerald-400">
+          0.4%
+        </span>
+        <span class="text-xs text-slate-400 font-mono-tech">PROB</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div id="prog-risk-bar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 4%"></div>
+      </div>
+      <div class="mt-2 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>CRITICAL LIMIT: &gt;15%</span>
+        <span class="text-slate-400">CONFIDENCE: 99.2%</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Remaining Useful Life (RUL) -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-violet-500/40 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech text-slate-400">
+        <span>REMAINING USEFUL LIFE</span>
+        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
+          TBO TARGET
+        </span>
+      </div>
+      <div class="my-2 flex items-baseline gap-1.5">
+        <span class="text-2xl lg:text-3xl font-bold font-mono-tech text-cyan-300">
+          357.2
+        </span>
+        <span class="text-xs text-slate-400 font-mono-tech">HRS</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div class="bg-cyan-400 h-full rounded-full" style="width: 71.4%"></div>
+      </div>
+      <div class="mt-2 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>TOTAL TBO: 500 HRS</span>
+        <span class="text-cyan-400">71.4% LIFE LEFT</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Maintenance Window Countdown -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-violet-500/40 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech text-slate-400">
+        <span>MAINTENANCE WINDOW</span>
+        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30">
+          CYCLE B
+        </span>
+      </div>
+      <div class="my-2 flex items-baseline gap-1.5">
+        <span class="text-2xl lg:text-3xl font-bold font-mono-tech text-amber-400">
+          7.2
+        </span>
+        <span class="text-xs text-slate-400 font-mono-tech">HRS REMAINING</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div class="bg-amber-400 h-full rounded-full" style="width: 85%"></div>
+      </div>
+      <div class="mt-2 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>ACTION: OIL SAMPLING</span>
+        <span class="text-slate-400">DUE AT 150.0H</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Degradation Velocity -->
+    <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-3.5 flex flex-col justify-between hover:border-violet-500/40 transition-colors">
+      <div class="flex items-center justify-between text-[11px] font-mono-tech text-slate-400">
+        <span>DEGRADATION VELOCITY</span>
+        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-violet-950/60 text-violet-300 border border-violet-500/30">
+          WEIBULL SLOPE
+        </span>
+      </div>
+      <div class="my-2 flex items-baseline gap-1.5">
+        <span class="text-2xl lg:text-3xl font-bold font-mono-tech text-slate-100">
+          0.04%
+        </span>
+        <span class="text-xs text-slate-400 font-mono-tech">/ FLIGHT HR</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div class="bg-violet-400 h-full rounded-full" style="width: 12%"></div>
+      </div>
+      <div class="mt-2 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>B10 LIFE: 480 HRS</span>
+        <span class="text-emerald-400">WEAR STABLE</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 2. Split Section: Degradation Projection Curve & Predicted Faults -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- Left: Health Degradation Projection Curve (7 cols) -->
+    <div class="lg:col-span-7 rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-violet-950/60 border border-violet-500/30 text-violet-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+              HEALTH DEGRADATION & PROGNOSIS TRAJECTORY
+            </h3>
+            <p class="text-[11px] text-slate-400 font-mono-tech">
+              OBSERVED RUNTIME VS ENSEMBLE LSTM FORECAST CORRIDOR
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 text-[10px] font-mono-tech text-slate-400">
+          <span class="flex items-center gap-1">
+            <span class="w-2.5 h-0.5 bg-emerald-400 inline-block"></span>
+            Observed
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="w-2.5 h-0.5 bg-violet-400 inline-block border-t border-dashed"></span>
+            LSTM Forecast
+          </span>
+        </div>
+      </div>
+
+      <!-- Projection SVG Chart -->
+      <div class="relative w-full h-[180px] my-3">
+        <svg class="w-full h-full overflow-visible" viewBox="0 0 500 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradPrognos" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          
+          <!-- Background Grid Lines -->
+          <line x1="0" y1="20" x2="500" y2="20" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="3 3"/>
+          <line x1="0" y1="60" x2="500" y2="60" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="3 3"/>
+          <line x1="0" y1="100" x2="500" y2="100" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="3 3"/>
+
+          <!-- Overhaul Anomaly Limit Line (Health = 70%) -->
+          <line x1="0" y1="110" x2="500" y2="110" stroke="#f43f5e" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+          <text x="490" y="106" fill="#f43f5e" font-size="8" font-family="monospace" text-anchor="end">70% OVERHAUL LIMIT</text>
+
+          <!-- Current Time Marker (142.8 hrs = ~142px) -->
+          <line x1="143" y1="10" x2="143" y2="130" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <text x="145" y="18" fill="#06b6d4" font-size="8" font-family="monospace">NOW: 142.8H</text>
+
+          <!-- Historical Observed Curve (0h -> 142.8h: 100% -> 94%) -->
+          <path d="M 0,15 Q 70,18 143,26" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="143" cy="26" r="3.5" fill="#10b981"/>
+
+          <!-- Forecast Shaded Corridor (143h -> 500h) -->
+          <path d="M 143,26 Q 300,50 500,105 L 500,118 Q 300,68 143,26 Z" fill="url(#gradPrognos)"/>
+
+          <!-- Forecast Mean Projection -->
+          <path d="M 143,26 Q 300,58 500,112" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4 3"/>
+        </svg>
+      </div>
+
+      <div class="flex justify-between items-center text-[10px] font-mono-tech text-slate-400 pt-2 border-t border-slate-800/60">
+        <span>0 HRS (ACCEPTANCE)</span>
+        <span>100 HRS</span>
+        <span class="text-cyan-400 font-bold">142.8 HRS (CURRENT)</span>
+        <span>250 HRS</span>
+        <span>500 HRS (TBO)</span>
+      </div>
+    </div>
+
+    <!-- Right: Predicted Faults & Early Warnings (5 cols) -->
+    <div class="lg:col-span-5 rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+          <div class="flex items-center gap-2">
+            <div class="p-1 rounded bg-amber-950/60 border border-amber-500/30 text-amber-400">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+                PREDICTED ANOMALY CLUSTERS
+              </h3>
+              <p class="text-[11px] text-slate-400 font-mono-tech">
+                PROGNOSIS LEAD-TIME HORIZON
+              </p>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
+            4 WATCHES
+          </span>
+        </div>
+
+        <div class="mt-3 space-y-2">
+          {predictedFaults.map((f) => (
+            <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800/90 hover:border-slate-700 transition-colors text-xs font-mono-tech">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-slate-200 font-semibold">{f.name}</span>
+                <span class:list={[
+                  "text-[9px] px-1.5 py-0.2 rounded border",
+                  f.severity === "CRITICAL" ? "bg-rose-950/50 text-rose-300 border-rose-500/30" :
+                  f.severity === "ELEVATED" ? "bg-amber-950/50 text-amber-300 border-amber-500/30" :
+                  "bg-emerald-950/50 text-emerald-300 border-emerald-500/30"
+                ]}>
+                  {f.severity}
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <span>{f.subsystem}</span>
+                <span class="text-cyan-400 font-semibold">{f.timeToImpact}</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
+                <div 
+                  class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-amber-400" 
+                  style={`width: ${f.probability * 2.5}%`}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between mt-2">
+        <span>CONFIDENCE INTERVAL: 95%</span>
+        <span class="text-emerald-400">NO IMMINENT STOP</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. Section: Prediction History Log -->
+  <div class="rounded-xl bg-[#0a0f1d] border border-slate-800 p-4 shadow-sm">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+      <div class="flex items-center gap-2">
+        <div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 14 14"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+            PROGNOSTIC INFERENCE EVENT AUDIT LOG
+          </h3>
+          <p class="text-[11px] text-slate-400 font-mono-tech">
+            TIME-SERIES INFERENCE AUDIT FOR AIRWORTHINESS RE-CERTIFICATION
+          </p>
+        </div>
+      </div>
+      <span class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-teal-950/40 text-teal-300 border border-teal-500/30">
+        CYCLIC AUTO-EVAL (30m)
+      </span>
+    </div>
+
+    <div class="my-3 overflow-x-auto rounded-lg border border-slate-800/80 bg-[#0d1424]">
+      <table class="w-full text-left text-xs font-mono-tech">
+        <thead class="bg-slate-950/80 text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+          <tr>
+            <th class="py-2.5 px-3">Timestamp</th>
+            <th class="py-2.5 px-3">Inference Engine</th>
+            <th class="py-2.5 px-3">Feature Domain</th>
+            <th class="py-2.5 px-3">Prognostic Output</th>
+            <th class="py-2.5 px-3 text-right">Confidence</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60">
+          {predictionHistory.map((p) => (
+            <tr class="hover:bg-slate-900/60 transition-colors">
+              <td class="py-2 px-3 text-cyan-400 font-semibold">{p.time}</td>
+              <td class="py-2 px-3 text-slate-300">{p.model}</td>
+              <td class="py-2 px-3 text-slate-400">{p.metric}</td>
+              <td class="py-2 px-3 text-slate-200 font-sans text-[11px]">{p.prediction}</td>
+              <td class="py-2 px-3 text-right text-emerald-400 font-bold">{p.confidence}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    const elRiskBadge = document.getElementById('prog-risk-badge');
+    const elRiskVal = document.getElementById('prog-risk-val');
+    const elRiskBar = document.getElementById('prog-risk-bar');
+
+    if (elRiskVal) {
+      if (s.faultRisk === 'CRITICAL') {
+        elRiskVal.textContent = '84.2%';
+        elRiskVal.className = 'text-2xl lg:text-3xl font-bold font-mono-tech text-rose-400';
+      } else if (s.faultRisk === 'HIGH') {
+        elRiskVal.textContent = '48.6%';
+        elRiskVal.className = 'text-2xl lg:text-3xl font-bold font-mono-tech text-amber-400';
+      } else if (s.faultRisk === 'MODERATE') {
+        elRiskVal.textContent = '18.5%';
+        elRiskVal.className = 'text-2xl lg:text-3xl font-bold font-mono-tech text-amber-400';
+      } else {
+        elRiskVal.textContent = '0.4%';
+        elRiskVal.className = 'text-2xl lg:text-3xl font-bold font-mono-tech text-emerald-400';
+      }
+    }
+
+    if (elRiskBadge) {
+      elRiskBadge.textContent = `${s.faultRisk} RISK`;
+      if (s.faultRisk === 'CRITICAL' || s.faultRisk === 'HIGH') {
+        elRiskBadge.className = 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-950/60 text-rose-400 border border-rose-500/30';
+      } else if (s.faultRisk === 'MODERATE') {
+        elRiskBadge.className = 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-950/60 text-amber-400 border border-amber-500/30';
+      } else {
+        elRiskBadge.className = 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+      }
+    }
+
+    if (elRiskBar) {
+      const pct = s.faultRisk === 'CRITICAL' ? 84 : s.faultRisk === 'HIGH' ? 49 : s.faultRisk === 'MODERATE' ? 18 : 4;
+      elRiskBar.style.width = `${pct}%`;
+      elRiskBar.className = pct > 40 ? 'bg-rose-500 h-full rounded-full transition-all duration-500' : 'bg-emerald-400 h-full rounded-full transition-all duration-500';
+    }
+  }) as EventListener);
+</script>

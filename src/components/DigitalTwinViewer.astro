@@ -1,5 +1,10 @@
 ---
 // DigitalTwinViewer.astro - Core Visual Centerpiece
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
 ---
 
 <div class="relative rounded-xl bg-[#0a0f1d] border border-cyan-500/30 overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.08)] flex flex-col" id="digital-twin">
@@ -20,7 +25,7 @@
             AERO ENGINE DIGITAL TWIN REPLICA
           </h2>
           <span class="text-[10px] font-mono-tech px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">
-            ISOMETRIC SCHEMATIC
+            {compact ? "PREVIEW" : "ISOMETRIC SCHEMATIC"}
           </span>
         </div>
         <div class="text-[11px] text-slate-400 font-mono-tech">
@@ -29,27 +34,42 @@
       </div>
     </div>
 
-    <!-- Core Status Indicator -->
+    <!-- Core Status Indicator & View Controls -->
     <div class="flex items-center gap-2.5">
-      <div id="twin-status-pill" class="flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-mono-tech font-semibold tracking-wider shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-colors">
-        <span id="twin-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span id="twin-status-text">ENGINE STATUS: HEALTHY</span>
-      </div>
+      {compact ? (
+        <a 
+          href="/digital-twin" 
+          class="flex items-center gap-1.5 px-3 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-mono-tech font-semibold hover:bg-cyan-900 transition-colors shadow-[0_0_12px_rgba(6,182,212,0.15)]"
+        >
+          <span>EXPAND TWIN</span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      ) : (
+        <div id="twin-status-pill" class="flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-mono-tech font-semibold tracking-wider shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-colors">
+          <span id="twin-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="twin-status-text">ENGINE STATUS: HEALTHY</span>
+        </div>
 
-      <!-- View Controls -->
-      <div class="hidden sm:flex items-center gap-1 bg-slate-900/90 p-1 rounded border border-slate-800 text-[10px] font-mono-tech text-slate-400">
-        <button id="btn-mode-wireframe" class="px-2 py-0.5 rounded text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 hover:text-cyan-300">
-          SCHEMATIC
-        </button>
-        <button id="btn-mode-thermal" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          THERMAL
-        </button>
-      </div>
+        <!-- View Controls -->
+        <div class="hidden sm:flex items-center gap-1 bg-slate-900/90 p-1 rounded border border-slate-800 text-[10px] font-mono-tech text-slate-400">
+          <button id="btn-mode-wireframe" class="px-2 py-0.5 rounded text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 hover:text-cyan-300">
+            SCHEMATIC
+          </button>
+          <button id="btn-mode-thermal" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+            THERMAL
+          </button>
+        </div>
+      )}
     </div>
   </div>
 
   <!-- Main Canvas / Engine Schematic Viewport -->
-  <div class="relative w-full h-[420px] sm:h-[460px] lg:h-[500px] flex items-center justify-center p-4 overflow-hidden bg-gradient-to-b from-[#090e1c] via-[#070b16] to-[#060911]">
+  <div class:list={[
+    "relative w-full flex items-center justify-center p-4 overflow-hidden bg-gradient-to-b from-[#090e1c] via-[#070b16] to-[#060911]",
+    compact ? "h-[290px] sm:h-[330px]" : "h-[480px] sm:h-[540px] lg:h-[600px]"
+  ]}>
     
     <!-- Background Technical Grid & Radar Sweep -->
     <div class="absolute inset-0 tech-grid-bg opacity-40 pointer-events-none"></div>

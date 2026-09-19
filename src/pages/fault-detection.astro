@@ -1,0 +1,296 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import FaultSimulationPanel from '../components/FaultSimulationPanel.astro';
+import FaultMonitoringPanel from '../components/FaultMonitoringPanel.astro';
+---
+
+<DashboardLayout 
+  title="Fault Detection & FDIR | UAV Aero Engine"
+  channelName="AUTONOMOUS FAULT DETECTION, ISOLATION & RECOVERY"
+  channelSubtitle="Model-Based Anomaly Detection, Multi-Sensor Evidence Thresholds & Hardware Simulation Console"
+>
+  <!-- 1. Fault Simulation Controls (Interactive Testbed) -->
+  <FaultSimulationPanel />
+
+  <!-- 2. Active Anomaly & Sensor Evidence Matrix -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- Active Anomaly Reasoning & Probability (5 cols) -->
+    <div class="lg:col-span-5 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+          <div class="flex items-center gap-2">
+            <div class="p-1 rounded bg-amber-950/60 border border-amber-500/30 text-amber-400">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+                ACTIVE FAULT CLASSIFICATION
+              </h3>
+              <p class="text-[11px] text-slate-400 font-mono-tech">
+                BAYESIAN INFERENCE REASONING
+              </p>
+            </div>
+          </div>
+          <span id="fd-active-badge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
+            NOMINAL
+          </span>
+        </div>
+
+        <div class="my-3 space-y-3">
+          <div class="p-3 rounded-lg bg-[#0d1424] border border-slate-800">
+            <div class="text-[10px] font-mono-tech text-slate-400">ISOLATED ROOT CAUSE:</div>
+            <div id="fd-fault-name" class="text-base font-bold font-mono-tech text-slate-200 mt-1">
+              None (Normal Operation)
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono-tech">
+            <div class="p-2.5 rounded bg-[#0d1424] border border-slate-800">
+              <div class="text-[10px] text-slate-400">SEVERITY LEVEL</div>
+              <div id="fd-severity" class="text-sm font-bold text-emerald-400 mt-0.5">LEVEL 0 (OK)</div>
+            </div>
+            <div class="p-2.5 rounded bg-[#0d1424] border border-slate-800">
+              <div class="text-[10px] text-slate-400">FAULT PROBABILITY</div>
+              <div id="fd-prob" class="text-sm font-bold text-cyan-400 mt-0.5">&lt; 0.5%</div>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded bg-[#0d1424] border border-slate-800 text-xs font-mono-tech">
+            <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+              <span>ISOLATION CONFIDENCE</span>
+              <span id="fd-confidence" class="text-emerald-400 font-semibold">99.1%</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+              <div id="fd-conf-bar" class="bg-emerald-400 h-full rounded-full" style="width: 99.1%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>FDIR ACTION:</span>
+        <span id="fd-action" class="text-emerald-400">CONTINUE MISSION</span>
+      </div>
+    </div>
+
+    <!-- Sensor Evidence & Telemetry Threshold Check (7 cols) -->
+    <div class="lg:col-span-7 rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+              TELEMETRY SENSOR EVIDENCE CORRELATION
+            </h3>
+            <p class="text-[11px] text-slate-400 font-mono-tech">
+              MEASURED VALUES VS CERTIFIED OPERATIONAL BOUNDS
+            </p>
+          </div>
+        </div>
+        <span class="text-[10px] font-mono-tech text-slate-400">4 EVIDENCE VECTORS</span>
+      </div>
+
+      <div class="my-3 space-y-2 text-xs font-mono-tech">
+        
+        <!-- Evidence 1: Temperature / CHT -->
+        <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-slate-200 font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              CYLINDER HEAD TEMPERATURE (CHT-1)
+            </div>
+            <div class="text-[10px] text-slate-400">THRESHOLD: &lt; 95.0°C NOMINAL</div>
+          </div>
+          <div class="text-right">
+            <div id="ev-temp-val" class="font-bold text-slate-100">78.0 °C</div>
+            <span id="ev-temp-st" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">PASS</span>
+          </div>
+        </div>
+
+        <!-- Evidence 2: Vibration RMS -->
+        <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-slate-200 font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+              BEARING VIBRATION HARMONIC (RMS)
+            </div>
+            <div class="text-[10px] text-slate-400">THRESHOLD: &lt; 2.5 mm/s NOMINAL</div>
+          </div>
+          <div class="text-right">
+            <div id="ev-vib-val" class="font-bold text-slate-100">1.2 mm/s</div>
+            <span id="ev-vib-st" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">PASS</span>
+          </div>
+        </div>
+
+        <!-- Evidence 3: Oil Pressure -->
+        <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-slate-200 font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+              MAIN GALLERY OIL PRESSURE
+            </div>
+            <div class="text-[10px] text-slate-400">THRESHOLD: &gt; 2.5 bar NOMINAL</div>
+          </div>
+          <div class="text-right">
+            <div id="ev-oil-val" class="font-bold text-slate-100">4.3 bar</div>
+            <span id="ev-oil-st" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">PASS</span>
+          </div>
+        </div>
+
+        <!-- Evidence 4: RPM / Fuel Flow Ratio -->
+        <div class="p-2.5 rounded-lg bg-[#0d1424] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-slate-200 font-semibold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-violet-400"></span>
+              BRAKE SPECIFIC CONSUMPTION RATIO
+            </div>
+            <div class="text-[10px] text-slate-400">THRESHOLD: 1,800 - 2,100 RPM/(g/s)</div>
+          </div>
+          <div class="text-right">
+            <div id="ev-ratio-val" class="font-bold text-slate-100">1,926</div>
+            <span id="ev-ratio-st" class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">PASS</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-[10px] font-mono-tech text-slate-400 flex justify-between">
+        <span>AUTO-ISOLATION SPEED: &lt;12ms</span>
+        <span class="text-cyan-400">THRESHOLD GATES ARMED</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. Fault History & Telemetry Event Log -->
+  <FaultMonitoringPanel />
+</DashboardLayout>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    // Active fault name & status
+    const elName = document.getElementById('fd-fault-name');
+    const elBadge = document.getElementById('fd-active-badge');
+    const elSeverity = document.getElementById('fd-severity');
+    const elProb = document.getElementById('fd-prob');
+    const elAction = document.getElementById('fd-action');
+
+    if (elName) {
+      elName.textContent = s.activeFault === 'None' ? 'None (Normal Operation)' : s.activeFault;
+      elName.className = s.activeFault === 'None' ? 'text-base font-bold font-mono-tech text-slate-200 mt-1' : 'text-base font-bold font-mono-tech text-rose-400 mt-1';
+    }
+
+    if (elBadge) {
+      if (s.engineStatus === 'CRITICAL') {
+        elBadge.className = 'text-[10px] font-mono-tech px-2 py-0.5 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30 font-bold';
+        elBadge.textContent = 'CRITICAL FAULT';
+      } else if (s.engineStatus === 'WARNING') {
+        elBadge.className = 'text-[10px] font-mono-tech px-2 py-0.5 rounded bg-amber-950/50 text-amber-400 border border-amber-500/30 font-bold';
+        elBadge.textContent = 'WARNING';
+      } else if (s.engineStatus === 'ADVISORY') {
+        elBadge.className = 'text-[10px] font-mono-tech px-2 py-0.5 rounded bg-amber-950/50 text-amber-400 border border-amber-500/30 font-bold';
+        elBadge.textContent = 'ADVISORY';
+      } else {
+        elBadge.className = 'text-[10px] font-mono-tech px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/30';
+        elBadge.textContent = 'NOMINAL';
+      }
+    }
+
+    if (elSeverity) {
+      if (s.engineStatus === 'CRITICAL') {
+        elSeverity.textContent = 'LEVEL 3 (CRITICAL)';
+        elSeverity.className = 'text-sm font-bold text-rose-400 mt-0.5';
+      } else if (s.engineStatus === 'WARNING') {
+        elSeverity.textContent = 'LEVEL 2 (WARNING)';
+        elSeverity.className = 'text-sm font-bold text-amber-400 mt-0.5';
+      } else if (s.engineStatus === 'ADVISORY') {
+        elSeverity.textContent = 'LEVEL 1 (ADVISORY)';
+        elSeverity.className = 'text-sm font-bold text-amber-400 mt-0.5';
+      } else {
+        elSeverity.textContent = 'LEVEL 0 (OK)';
+        elSeverity.className = 'text-sm font-bold text-emerald-400 mt-0.5';
+      }
+    }
+
+    if (elProb) {
+      if (s.activeFault !== 'None') {
+        elProb.textContent = '96.8%';
+        elProb.className = 'text-sm font-bold text-rose-400 mt-0.5';
+      } else {
+        elProb.textContent = '< 0.5%';
+        elProb.className = 'text-sm font-bold text-cyan-400 mt-0.5';
+      }
+    }
+
+    if (elAction) {
+      if (s.engineStatus === 'CRITICAL') {
+        elAction.textContent = 'INITIATE RTB (RETURN TO BASE)';
+        elAction.className = 'text-rose-400 font-bold';
+      } else if (s.engineStatus === 'WARNING') {
+        elAction.textContent = 'REDUCE THROTTLE & MONITOR';
+        elAction.className = 'text-amber-400 font-bold';
+      } else {
+        elAction.textContent = 'CONTINUE MISSION';
+        elAction.className = 'text-emerald-400';
+      }
+    }
+
+    // Evidence checks
+    const evTemp = document.getElementById('ev-temp-val');
+    const evTempSt = document.getElementById('ev-temp-st');
+    if (evTemp) evTemp.textContent = `${s.temperature} °C`;
+    if (evTempSt) {
+      if (s.temperature > 95) {
+        evTempSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        evTempSt.textContent = 'EXCEEDED';
+      } else {
+        evTempSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        evTempSt.textContent = 'PASS';
+      }
+    }
+
+    const evVib = document.getElementById('ev-vib-val');
+    const evVibSt = document.getElementById('ev-vib-st');
+    if (evVib) evVib.textContent = `${s.vibration} mm/s`;
+    if (evVibSt) {
+      if (s.vibration > 2.5) {
+        evVibSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        evVibSt.textContent = 'EXCEEDED';
+      } else {
+        evVibSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        evVibSt.textContent = 'PASS';
+      }
+    }
+
+    const evOil = document.getElementById('ev-oil-val');
+    const evOilSt = document.getElementById('ev-oil-st');
+    if (evOil) evOil.textContent = `${s.oilPressure} bar`;
+    if (evOilSt) {
+      if (s.oilPressure < 2.5) {
+        evOilSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        evOilSt.textContent = 'LOW OIL';
+      } else {
+        evOilSt.className = 'text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        evOilSt.textContent = 'PASS';
+      }
+    }
+
+    const evRatio = document.getElementById('ev-ratio-val');
+    if (evRatio) evRatio.textContent = String(Math.round(s.rpm / s.fuelFlow));
+  }) as EventListener);
+</script>

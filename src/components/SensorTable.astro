@@ -1,0 +1,212 @@
+---
+// SensorTable.astro - Aerospace Telemetry & Sensor Registry Table
+interface SensorRow {
+  id: string;
+  name: string;
+  channel: string;
+  subsystem: string;
+  nominal: string;
+  threshold: string;
+  canId: string;
+  unit: string;
+  defaultVal: string;
+  valId: string;
+  statusId: string;
+}
+
+const sensors: SensorRow[] = [
+  { id: "SENS-RPM-01", name: "Crankshaft Tachometer", channel: "TACH-1", subsystem: "Kinematics", nominal: "5,000 - 5,400", threshold: "> 6,200", canId: "0x120", unit: "RPM", defaultVal: "5,200", valId: "tbl-rpm", statusId: "tbl-rpm-st" },
+  { id: "SENS-CHT-01", name: "Cylinder Head Temp 1", channel: "CHT-A1", subsystem: "Thermal / Cyl", nominal: "70 - 85", threshold: "> 95", canId: "0x124", unit: "°C", defaultVal: "78.2", valId: "tbl-cht1", statusId: "tbl-cht1-st" },
+  { id: "SENS-CHT-02", name: "Cylinder Head Temp 2", channel: "CHT-A2", subsystem: "Thermal / Cyl", nominal: "70 - 85", threshold: "> 95", canId: "0x125", unit: "°C", defaultVal: "77.8", valId: "tbl-cht2", statusId: "tbl-cht2-st" },
+  { id: "SENS-CHT-03", name: "Cylinder Head Temp 3", channel: "CHT-B1", subsystem: "Thermal / Cyl", nominal: "70 - 85", threshold: "> 95", canId: "0x126", unit: "°C", defaultVal: "78.5", valId: "tbl-cht3", statusId: "tbl-cht3-st" },
+  { id: "SENS-CHT-04", name: "Cylinder Head Temp 4", channel: "CHT-B2", subsystem: "Thermal / Cyl", nominal: "70 - 85", threshold: "> 95", canId: "0x127", unit: "°C", defaultVal: "78.1", valId: "tbl-cht4", statusId: "tbl-cht4-st" },
+  { id: "SENS-OIL-01", name: "Main Gallery Oil Pressure", channel: "OIL-P", subsystem: "Lubrication", nominal: "3.8 - 4.8", threshold: "< 2.5", canId: "0x130", unit: "bar", defaultVal: "4.3", valId: "tbl-oilp", statusId: "tbl-oilp-st" },
+  { id: "SENS-OIL-02", name: "Sump Oil Temperature", channel: "OIL-T", subsystem: "Lubrication", nominal: "65 - 82", threshold: "> 90", canId: "0x131", unit: "°C", defaultVal: "74.0", valId: "tbl-oilt", statusId: "tbl-oilt-st" },
+  { id: "SENS-VIB-01", name: "Tri-Axial Bearing Vibration", channel: "VIB-RMS", subsystem: "Bearings", nominal: "0.8 - 1.8", threshold: "> 3.5", canId: "0x140", unit: "mm/s", defaultVal: "1.2", valId: "tbl-vib", statusId: "tbl-vib-st" },
+  { id: "SENS-FF-01", name: "Fuel Metering Flow Rate", channel: "FUEL-FLOW", subsystem: "Fuel System", nominal: "2.4 - 3.2", threshold: "> 4.5", canId: "0x150", unit: "g/s", defaultVal: "2.7", valId: "tbl-fuel", statusId: "tbl-fuel-st" },
+  { id: "SENS-EGT-01", name: "Exhaust Gas Collector Temp", channel: "EGT-MAIN", subsystem: "Exhaust", nominal: "650 - 720", threshold: "> 780", canId: "0x160", unit: "°C", defaultVal: "684", valId: "tbl-egt", statusId: "tbl-egt-st" },
+  { id: "SENS-MAP-01", name: "Manifold Absolute Pressure", channel: "MAP-INLET", subsystem: "Air Intake", nominal: "92 - 104", threshold: "< 70", canId: "0x170", unit: "kPa", defaultVal: "98.4", valId: "tbl-map", statusId: "tbl-map-st" }
+];
+---
+
+<div class="rounded-xl bg-[#0a0f1d] border border-slate-800/90 p-4 shadow-sm flex flex-col justify-between">
+  <!-- Header & Bus Status Bar -->
+  <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div class="p-1 rounded bg-teal-950/60 border border-teal-500/30 text-teal-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"></path>
+          <path d="M18 17V9"></path>
+          <path d="M13 17V5"></path>
+          <path d="M8 17v-3"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider font-mono-tech text-slate-200">
+          CAN-BUS TELEMETRY SENSOR MATRIX
+        </h3>
+        <p class="text-[11px] text-slate-400 font-mono-tech">
+          MIL-STD-1553B DUAL REDUNDANT SENSOR BUS // 11 CHANNELS ACTIVE
+        </p>
+      </div>
+    </div>
+
+    <!-- Bus Telemetry Live Indicators -->
+    <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+      <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+        BUS LOAD: <strong class="text-cyan-400">32.8%</strong>
+      </span>
+      <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+        DROPPED: <strong class="text-emerald-400">0 PKTS</strong>
+      </span>
+      <span class="px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 font-bold">
+        STREAM SYNCED
+      </span>
+    </div>
+  </div>
+
+  <!-- Telemetry Table Viewport -->
+  <div class="my-3 overflow-x-auto rounded-lg border border-slate-800/80 bg-[#0d1424]">
+    <table class="w-full text-left text-xs font-mono-tech">
+      <thead class="bg-slate-950/80 text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+        <tr>
+          <th class="py-2.5 px-3">Sensor ID</th>
+          <th class="py-2.5 px-3">Parameter Description</th>
+          <th class="py-2.5 px-3">Subsystem</th>
+          <th class="py-2.5 px-3">CAN Addr</th>
+          <th class="py-2.5 px-3 text-right">Live Value</th>
+          <th class="py-2.5 px-3">Nominal</th>
+          <th class="py-2.5 px-3">Limit</th>
+          <th class="py-2.5 px-3 text-center">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800/60">
+        {sensors.map((s) => (
+          <tr class="hover:bg-slate-900/60 transition-colors">
+            <td class="py-2 px-3 text-cyan-400 font-semibold">{s.id}</td>
+            <td class="py-2 px-3 text-slate-200">
+              {s.name}
+              <span class="text-[9px] text-slate-500 ml-1.5 font-normal">[{s.channel}]</span>
+            </td>
+            <td class="py-2 px-3 text-slate-400">{s.subsystem}</td>
+            <td class="py-2 px-3 text-slate-500">{s.canId}</td>
+            <td class="py-2 px-3 text-right">
+              <span id={s.valId} class="font-bold text-slate-100">{s.defaultVal}</span>
+              <span class="text-[10px] text-slate-400 ml-1">{s.unit}</span>
+            </td>
+            <td class="py-2 px-3 text-slate-400">{s.nominal}</td>
+            <td class="py-2 px-3 text-slate-500">{s.threshold}</td>
+            <td class="py-2 px-3 text-center">
+              <span id={s.statusId} class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">
+                NOMINAL
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Table Footnote -->
+  <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+    <span>SAMPLING FREQUENCY: 1,000 HZ FIXED</span>
+    <span class="text-cyan-400">CRC-32 CHECKSUM VERIFIED // NO DRIFT</span>
+  </div>
+</div>
+
+<script>
+  import type { EngineState } from '../data/engineSimulator';
+
+  document.addEventListener('engine-state-update', ((e: CustomEvent<EngineState>) => {
+    const s = e.detail;
+
+    // RPM
+    const elRpm = document.getElementById('tbl-rpm');
+    const elRpmSt = document.getElementById('tbl-rpm-st');
+    if (elRpm) elRpm.textContent = s.rpm.toLocaleString();
+    if (elRpmSt) {
+      if (s.rpm > 6200 || s.rpm < 4000) {
+        elRpmSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        elRpmSt.textContent = 'WARNING';
+      } else {
+        elRpmSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        elRpmSt.textContent = 'NOMINAL';
+      }
+    }
+
+    // CHT 1..4 (with slight realistic cylinder delta)
+    const cht1 = s.temperature;
+    const cht2 = parseFloat((s.temperature - 0.4).toFixed(1));
+    const cht3 = parseFloat((s.temperature + 0.3).toFixed(1));
+    const cht4 = parseFloat((s.temperature - 0.1).toFixed(1));
+
+    const setCht = (idVal: string, idSt: string, val: number) => {
+      const el = document.getElementById(idVal);
+      const st = document.getElementById(idSt);
+      if (el) el.textContent = String(val);
+      if (st) {
+        if (val > 95) {
+          st.className = 'text-[9px] px-1.5 py-0.5 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+          st.textContent = 'CRITICAL';
+        } else if (val > 85) {
+          st.className = 'text-[9px] px-1.5 py-0.5 rounded bg-amber-950/50 text-amber-400 border border-amber-500/30';
+          st.textContent = 'ELEVATED';
+        } else {
+          st.className = 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+          st.textContent = 'NOMINAL';
+        }
+      }
+    };
+
+    setCht('tbl-cht1', 'tbl-cht1-st', cht1);
+    setCht('tbl-cht2', 'tbl-cht2-st', cht2);
+    setCht('tbl-cht3', 'tbl-cht3-st', cht3);
+    setCht('tbl-cht4', 'tbl-cht4-st', cht4);
+
+    // Oil Pressure
+    const elOilP = document.getElementById('tbl-oilp');
+    const elOilPSt = document.getElementById('tbl-oilp-st');
+    if (elOilP) elOilP.textContent = String(s.oilPressure);
+    if (elOilPSt) {
+      if (s.oilPressure < 2.5) {
+        elOilPSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        elOilPSt.textContent = 'LOW OIL';
+      } else if (s.oilPressure < 3.5) {
+        elOilPSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-amber-950/50 text-amber-400 border border-amber-500/30';
+        elOilPSt.textContent = 'ADVISORY';
+      } else {
+        elOilPSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        elOilPSt.textContent = 'NOMINAL';
+      }
+    }
+
+    // Sump Oil Temp (derived from engine temperature)
+    const elOilT = document.getElementById('tbl-oilt');
+    if (elOilT) elOilT.textContent = (s.temperature * 0.92).toFixed(1);
+
+    // Vibration
+    const elVib = document.getElementById('tbl-vib');
+    const elVibSt = document.getElementById('tbl-vib-st');
+    if (elVib) elVib.textContent = String(s.vibration);
+    if (elVibSt) {
+      if (s.vibration > 3.5) {
+        elVibSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-rose-950/50 text-rose-400 border border-rose-500/30';
+        elVibSt.textContent = 'HIGH RMS';
+      } else if (s.vibration > 2.0) {
+        elVibSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-amber-950/50 text-amber-400 border border-amber-500/30';
+        elVibSt.textContent = 'ELEVATED';
+      } else {
+        elVibSt.className = 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/50 text-emerald-400 border border-emerald-500/30';
+        elVibSt.textContent = 'NOMINAL';
+      }
+    }
+
+    // Fuel Flow
+    const elFuel = document.getElementById('tbl-fuel');
+    if (elFuel) elFuel.textContent = String(s.fuelFlow);
+
+    // EGT (derived from RPM and temperature)
+    const elEgt = document.getElementById('tbl-egt');
+    if (elEgt) elEgt.textContent = String(Math.round(620 + (s.temperature - 78) * 3 + (s.rpm - 5200) * 0.05));
+  }) as EventListener);
+</script>
